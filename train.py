@@ -61,13 +61,9 @@ def main():
 
     logger.close()
 
-    # Test the Model
-    test(val_loader, cnn)
-
     # Save the Trained Model
     torch.save(cnn.state_dict(), 'result/cnn.pkl')
     torch.save(cnn, 'result/cnn.pth')
-
 
 def save_checkpoint(model, filename='result/cnn_checkpoint.pth'):
     print "saving checkpoint"
@@ -146,29 +142,6 @@ def train(loader, model, optimizer, criterion, epoch):
         if i % constants.print_freq == 0:
             print('[TRAIN] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
                   % (epoch + 1, constants.num_epochs, losses.val, losses.avg))
-
-
-def test(loader, model):
-    """This function tests the model"""
-    model.eval()    # Change model to 'eval' mode (BN uses moving mean/var).
-    valid_loss = 0
-    correct = 0
-    for test_images, test_labels in loader:
-        images = Variable(test_images)
-        labels = Variable(test_labels)
-        if cuda:
-            images = images.cuda()
-            labels = labels.cuda()
-        outputs = model(images)
-        cost = nn.MSELoss()
-        valid_loss += cost(outputs, labels).data[0]
-        # _, predicted = torch.max(outputs.data, 1)
-        correct += 1
-
-    valid_loss /= len(loader.dataset)
-
-    print('Test Accuracy of the model on the %d test images: %.8f' %
-          (len(loader.dataset), valid_loss))
 
 if __name__ == '__main__':
     main()
