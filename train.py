@@ -42,7 +42,7 @@ def main():
     if cuda:
         cnn.cuda()
 
-    cnn.summary()
+    # cnn.summary()
 
     # Optimizer and Loss
     optimizer = torch.optim.Adam(cnn.parameters(), lr=constants.learning_rate)
@@ -91,9 +91,9 @@ def validate(loader, model, criterion, epoch):
     model.eval()
     losses = AverageMeter()
 
-    for i, (train_images, train_labels) in enumerate(loader):
-        images = Variable(train_images)
-        labels = Variable(train_labels)
+    for i, (val_images, val_labels) in enumerate(loader):
+        images = Variable(val_images)
+        labels = Variable(val_labels)
         if cuda:
             images = images.cuda()
             labels = labels.cuda()

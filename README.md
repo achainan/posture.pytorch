@@ -10,6 +10,7 @@ python train.py
 ## Dataset
 
 Images are not included in the data folder as this is a public facing project.
+
 The dataset should follow this folder structure:
 
 ```
@@ -31,4 +32,8 @@ The dataset should follow this folder structure:
 
 You can see the progress via tensorboard by running `tensorboard --logdir runs` and going to http://localhost:6006/
 
-#### Under Development
+## Caution
+
+This code is still under development.
+Currently, we have small amount of annotated data.
+Please note that currently the validation_data.csv is the same as the train_data.csv. This will change once we gather enough annotated data.
