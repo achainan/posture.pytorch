@@ -65,6 +65,7 @@ def main():
     torch.save(cnn.state_dict(), 'result/cnn.pkl')
     torch.save(cnn, 'result/cnn.pth')
 
+
 def save_checkpoint(model, filename='result/cnn_checkpoint.pth'):
     print "saving checkpoint"
     torch.save(model, filename)
@@ -142,6 +143,7 @@ def train(loader, model, optimizer, criterion, epoch):
         if i % constants.print_freq == 0:
             print('[TRAIN] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
                   % (epoch + 1, constants.num_epochs, losses.val, losses.avg))
+
 
 if __name__ == '__main__':
     main()

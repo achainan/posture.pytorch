@@ -6,6 +6,7 @@ import constants
 
 w_bound = 0.005
 
+
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
@@ -14,6 +15,7 @@ def weights_init(m):
     elif classname.find('Linear') != -1:
         m.weight.data.uniform_(-w_bound, w_bound)
         m.bias.data.fill_(0)
+
 
 def conv_dim(w, h, p, f, s):
     # (n + 2p - f)/ s + 1

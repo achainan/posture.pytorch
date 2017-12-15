@@ -11,6 +11,7 @@ from torchvision import transforms
 import constants
 from third_party import apply_transform
 
+
 def load_dataset():
     """This function loads the dataset with the desired transformations."""
     train_dataset = PostureLandmarksDataset(csv_file='B/train_data.csv',
@@ -69,6 +70,7 @@ class PostureLandmarksDataset(Dataset):
             sample = self.transform(sample)
 
         return sample
+
 
 class Scale(object):
     """Random shift the image in a sample.
@@ -144,6 +146,7 @@ class RandomHorizontalFlip(object):
 
         return {'image': image, 'landmarks': landmarks}
 
+
 class BlackAndWhite(object):
     """Convert image to grayscale."""
 
@@ -155,6 +158,7 @@ class BlackAndWhite(object):
         image = np.expand_dims(image, axis=3)
 
         return {'image': image, 'landmarks': landmarks}
+
 
 class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""

@@ -4,6 +4,8 @@ import numpy as np
 import scipy.ndimage as ndi
 
 # Taken from: https://github.com/pytorch/examples/blob/master/imagenet/main.py
+
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
 
@@ -22,8 +24,12 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
-# Taken from keras: https://github.com/keras-team/keras/blob/master/keras/preprocessing/image.py
-def apply_transform(x, transform_matrix, channel_axis=0, fill_mode='nearest', cval=0.):
+# Taken from keras:
+# https://github.com/keras-team/keras/blob/master/keras/preprocessing/image.py
+
+
+def apply_transform(x, transform_matrix, channel_axis=0,
+                    fill_mode='nearest', cval=0.):
     """Apply the image transformation specified by a matrix."""
 
     x = np.rollaxis(x, channel_axis, 0)
