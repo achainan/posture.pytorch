@@ -13,7 +13,7 @@ from third_party import apply_transform
 
 def load_dataset():
     """This function loads the dataset with the desired transformations."""
-    train_dataset = PostureLandmarksDataset(csv_file='B/posture_data.csv',
+    train_dataset = PostureLandmarksDataset(csv_file='B/train_data.csv',
                                             root_dir='B/',
                                             transform=transforms.Compose([
                                                 Scale(constants.scale),
@@ -24,7 +24,7 @@ def load_dataset():
                                                 ToTensor()
                                             ]))
 
-    valid_data = PostureLandmarksDataset(csv_file='B/posture_data.csv',
+    valid_data = PostureLandmarksDataset(csv_file='B/validation_data.csv',
                                          root_dir='B/',
                                          transform=transforms.Compose([
                                              Scale(constants.scale),

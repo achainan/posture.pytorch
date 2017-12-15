@@ -114,6 +114,7 @@ venv.bak/
 /crud
 /layers
 /experiment
+/predict
 
 .DS_Store
 

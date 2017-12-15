@@ -13,7 +13,8 @@ Images are not included in the data folder as this is a public facing project.
 The dataset should follow this folder structure:
 
 ```
-  ./B/posture_data.csv
+  ./B/train_data.csv
+  ./B/validation_data.csv
   ./B/train/
       1.jpg
       2.jpg
