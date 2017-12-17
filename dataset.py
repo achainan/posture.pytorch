@@ -11,29 +11,46 @@ from torchvision import transforms
 import constants
 from third_party import apply_transform
 
+images_mean, images_std, labels_mean, labels_std = 216.91674805, 51.54261398, 147.78466797, 57.77311325
+
+def train_dataset(normalization=None, random=True):
+    transformations = [Scale(constants.scale)]
+    if random:
+        transformations.append(RandomHorizontalFlip())
+        transformations.append(RandomShift(100 * constants.scale))
+
+    transformations.append(BlackAndWhite())
+
+    if normalization is not None:
+        transformations.append(normalization)
+
+    transformations.append(ToTensor())
+
+    transform = transforms.Compose(transformations)
+
+    train_dataset = PostureLandmarksDataset(
+        csv_file='B/train_data.csv',
+        root_dir='B/',
+        transform=transform)
+    return train_dataset
+
 
 def load_dataset():
     """This function loads the dataset with the desired transformations."""
-    train_dataset = PostureLandmarksDataset(csv_file='B/train_data.csv',
-                                            root_dir='B/',
-                                            transform=transforms.Compose([
-                                                Scale(constants.scale),
-                                                RandomHorizontalFlip(),
-                                                RandomShift(
-                                                    100 * constants.scale),
-                                                BlackAndWhite(),
-                                                ToTensor()
-                                            ]))
+    
+    normalization = Normalize(images_mean, images_std, labels_mean, labels_std)
+    train_data = train_dataset(normalization)
 
     valid_data = PostureLandmarksDataset(csv_file='B/validation_data.csv',
                                          root_dir='B/',
                                          transform=transforms.Compose([
                                              Scale(constants.scale),
                                              BlackAndWhite(),
+                                             normalization,
                                              ToTensor()
                                          ]))
 
-    return {"train": train_dataset, "valid": valid_data}
+    return {"train": train_data, "valid": valid_data}
 
 
 class PostureLandmarksDataset(Dataset):
@@ -175,4 +192,23 @@ class ToTensor(object):
         image = torch.from_numpy(image)
 
         landmarks = landmarks.reshape(1, -1)
-        return image.float().div(255), torch.from_numpy(landmarks).float().div(670)
+        return image.float(), torch.from_numpy(landmarks).float()
+
+
+class Normalize(object):
+    """Convert ndarrays in sample to Tensors."""
+
+    def __init__(self, images_mean, images_std, labels_mean, labels_std):
+        self.images_mean = images_mean
+        self.images_std = images_std
+        self.labels_mean = labels_mean
+        self.labels_std = labels_std
+
+    def __call__(self, sample):
+        image, landmarks = np.array(sample['image'], copy=True, dtype=np.float32), np.array(
+            sample['landmarks'], copy=True, dtype=np.float32)
+
+        image = (image - self.images_mean) / self.images_std
+        landmarks = (landmarks - self.labels_mean) / self.labels_std
+
+        return {'image': image, 'landmarks': landmarks}

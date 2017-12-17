@@ -15,6 +15,7 @@ from third_party import AverageMeter
 cuda = torch.cuda.is_available()
 logger = SummaryWriter()
 
+images_mean, images_std, labels_mean, labels_std = 216.91674805, 51.54261398, 147.78466797, 57.77311325
 
 def main():
     shuffle = True
@@ -78,10 +79,15 @@ def save_preview(images, outputs, i, name='model/(train)output'):
     image = np.rollaxis(image, 0, 3)
     image = image.squeeze()
 
+    output = output * labels_std + labels_mean
+
+    image = image * images_std + images_mean
+    image = image / 255
+    
     image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
     for coordinates in output[0]:
-        x = coordinates[0] * 670
-        y = coordinates[1] * 670
+        x = coordinates[0]
+        y = coordinates[1]
         circle_size = 2
         cv2.circle(image, (int(x), int(y)), circle_size, (0, 0, 255), -1)
 

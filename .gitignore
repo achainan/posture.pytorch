@@ -109,6 +109,9 @@ venv.bak/
 # Ignore webpages temporarily while in development
 *.html
 
+# Ignore normalization temporarily while in development
+normalization.py
+
 # Custom folders
 .git-old
 /test
