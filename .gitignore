@@ -106,6 +106,9 @@ venv.bak/
 # Ignore images temporarily while in development
 *.jpg
 
+# Ignore webpages temporarily while in development
+*.html
+
 # Custom folders
 .git-old
 /test
