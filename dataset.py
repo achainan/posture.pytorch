@@ -13,6 +13,7 @@ from third_party import apply_transform
 
 images_mean, images_std, labels_mean, labels_std = 216.91674805, 51.54261398, 147.78466797, 57.77311325
 
+
 def train_dataset(normalization=None, random=True):
     transformations = [Scale(constants.scale)]
     if random:
@@ -37,7 +38,7 @@ def train_dataset(normalization=None, random=True):
 
 def load_dataset():
     """This function loads the dataset with the desired transformations."""
-    
+
     normalization = Normalize(images_mean, images_std, labels_mean, labels_std)
     train_data = train_dataset(normalization)
 

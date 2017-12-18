@@ -17,6 +17,7 @@ logger = SummaryWriter()
 
 images_mean, images_std, labels_mean, labels_std = 216.91674805, 51.54261398, 147.78466797, 57.77311325
 
+
 def main():
     shuffle = True
 
@@ -72,7 +73,7 @@ def save_checkpoint(model, filename='result/cnn_checkpoint.pth'):
     torch.save(model, filename)
 
 
-def save_preview(images, outputs, i, name='model/(train)output'):
+def load_preview(images, outputs):
     """This function logs a preview image to tensorboard"""
     image = images.data[0].cpu().numpy()
     output = outputs.data[0].view(1, -1, 2).cpu().numpy()
@@ -83,7 +84,7 @@ def save_preview(images, outputs, i, name='model/(train)output'):
 
     image = image * images_std + images_mean
     image = image / 255
-    
+
     image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
     for coordinates in output[0]:
         x = coordinates[0]
@@ -91,7 +92,7 @@ def save_preview(images, outputs, i, name='model/(train)output'):
         circle_size = 2
         cv2.circle(image, (int(x), int(y)), circle_size, (0, 0, 255), -1)
 
-    logger.add_image(name, image, i + 1)
+    return image
 
 
 def validate(loader, model, criterion, epoch):
@@ -116,7 +117,8 @@ def validate(loader, model, criterion, epoch):
         logger.add_scalar('Val/Loss', loss.data[0], niter)
 
         if i % constants.print_freq == 0:
-            save_preview(images, outputs, i, 'model/(val)output')
+            preview = load_preview(images, outputs)
+            logger.add_image('Val/Output', preview, i + 1)
             print('[VALID] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
                   % (epoch + 1, constants.num_epochs, losses.val, losses.avg))
 
@@ -147,6 +149,9 @@ def train(loader, model, optimizer, criterion, epoch):
         logger.add_scalar('Train/Loss', loss.data[0], niter)
 
         if i % constants.print_freq == 0:
+            preview = load_preview(images, outputs)
+            logger.add_image('Train/Output', preview, i + 1)
+
             print('[TRAIN] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
                   % (epoch + 1, constants.num_epochs, losses.val, losses.avg))
 
