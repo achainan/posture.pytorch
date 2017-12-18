@@ -27,14 +27,14 @@ def main():
 
     # Data Loader (Input Pipeline)
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                               batch_size=constants.batch_size,
+                                               batch_size=constants.train_batch_size,
                                                shuffle=shuffle,
                                                pin_memory=cuda,
                                                num_workers=constants.num_workers,
                                                drop_last=True)
 
     val_loader = torch.utils.data.DataLoader(dataset=val_dataset,
-                                             batch_size=constants.batch_size,
+                                             batch_size=constants.val_batch_size,
                                              shuffle=shuffle,
                                              pin_memory=cuda,
                                              num_workers=constants.num_workers,
