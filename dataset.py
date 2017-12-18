@@ -15,6 +15,8 @@ images_mean, images_std, labels_mean, labels_std = 216.91674805, 51.54261398, 14
 
 
 def train_dataset(normalization=None, random=True):
+    """This function loads the training dataset with the desired transformations."""
+
     transformations = [Scale(constants.scale)]
     if random:
         transformations.append(RandomHorizontalFlip())
@@ -37,7 +39,7 @@ def train_dataset(normalization=None, random=True):
 
 
 def load_dataset():
-    """This function loads the dataset with the desired transformations."""
+    """This function loads the datasets with the desired transformations."""
 
     normalization = Normalize(images_mean, images_std, labels_mean, labels_std)
     train_data = train_dataset(normalization)
@@ -59,13 +61,6 @@ class PostureLandmarksDataset(Dataset):
 
     def __init__(self, csv_file, root_dir, transform=None,
                  loader=torchvision.datasets.folder.default_loader):
-        """
-        Args:
-            csv_file (string): Path to the csv file with annotations.
-            root_dir (string): Directory with all the images.
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
-        """
         self.landmarks_frame = pd.read_csv(csv_file)
         self.root_dir = root_dir
         self.transform = transform
@@ -76,18 +71,17 @@ class PostureLandmarksDataset(Dataset):
 
     def __getitem__(self, idx):
         img_name = os.path.join(self.root_dir, self.landmarks_frame.ix[idx, 0])
-        # image = io.imread(img_name)
         image = self.loader(img_name)
 
-        landmarks = self.landmarks_frame.ix[idx,
-                                            1:].as_matrix().astype('float')
+        landmarks = self.landmarks_frame.ix[idx, 1:]
+        landmarks = landmarks.as_matrix().astype('float')
         landmarks = landmarks.reshape(-1, 2)
-        sample = {'image': image, 'landmarks': landmarks}
+        item = {'image': image, 'landmarks': landmarks}
 
         if self.transform:
-            sample = self.transform(sample)
+            item = self.transform(item)
 
-        return sample
+        return item
 
 
 class Scale(object):
@@ -100,7 +94,6 @@ class Scale(object):
     def __call__(self, sample):
         image, landmarks = np.array(sample['image'], copy=True, dtype=np.float32), np.array(
             sample['landmarks'], copy=True, dtype=np.float32)
-        # image, landmarks = sample['image'], sample['landmarks']
 
         image = scipy.misc.imresize(image, self.size)
         landmarks *= self.size
