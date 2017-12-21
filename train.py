@@ -52,14 +52,21 @@ def main():
     if cuda:
         criterion.cuda()
 
+    best_val_error = None
     # Train the Model
+        
     for epoch in range(constants.num_epochs):
-        train(train_loader, cnn, optimizer, criterion, epoch)
+        train_error = train(train_loader, cnn, optimizer, criterion, epoch)
 
-        validate(val_loader, cnn, criterion, epoch)
+        val_error = validate(val_loader, cnn, criterion, epoch)
+
+        logger.add_scalars('Loss', {"test":val_error, "train":train_error}, epoch)
 
         if (epoch + 1) % constants.save_interval == 0:
             save_checkpoint(cnn)
+            if val_error < best_val_error or best_val_error is None:
+                best_val_error = val_error
+                save_checkpoint(cnn, 'result/best_checkpoint.pth')
 
     logger.close()
 
@@ -121,6 +128,8 @@ def validate(loader, model, criterion, epoch):
             logger.add_image('Val/Output', preview, i + 1)
             print('[VALID] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
                   % (epoch + 1, constants.num_epochs, losses.val, losses.avg))
+                  
+    return losses.avg
 
 
 def train(loader, model, optimizer, criterion, epoch):
@@ -155,6 +164,7 @@ def train(loader, model, optimizer, criterion, epoch):
             print('[TRAIN] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
                   % (epoch + 1, constants.num_epochs, losses.val, losses.avg))
 
+    return losses.avg
 
 if __name__ == '__main__':
     main()
