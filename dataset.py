@@ -13,7 +13,7 @@ import constants
 from third_party import apply_transform
 
 
-def train_dataset(normalization=None, random=True):
+def train_dataset(normalization=None, random=True, grayscale=True):
     """This function loads the training dataset with the desired transformations."""
 
     transformations = [Scale(constants.scale)]
@@ -21,7 +21,8 @@ def train_dataset(normalization=None, random=True):
         transformations.append(RandomHorizontalFlip())
         transformations.append(RandomShift(100 * constants.scale))
 
-    transformations.append(BlackAndWhite())
+    if grayscale:
+        transformations.append(BlackAndWhite())
 
     if normalization is not None:
         transformations.append(normalization)
@@ -37,12 +38,13 @@ def train_dataset(normalization=None, random=True):
     return train_dataset
 
 
-def valid_dataset(normalization=None, random=True):
+def valid_dataset(normalization=None, grayscale=True):
     """This function loads the training dataset with the desired transformations."""
 
     transformations = [Scale(constants.scale)]
 
-    transformations.append(BlackAndWhite())
+    if grayscale:
+        transformations.append(BlackAndWhite())
 
     if normalization is not None:
         transformations.append(normalization)
@@ -59,12 +61,12 @@ def valid_dataset(normalization=None, random=True):
 
 
 def load_dataset(images_mean, images_std, labels_mean,
-                 labels_std):
+                 labels_std, grayscale=True):
     """This function loads the datasets with the desired transformations."""
 
     normalization = Normalize(images_mean, images_std, labels_mean, labels_std)
-    train_data = train_dataset(normalization)
-    valid_data = valid_dataset(normalization)
+    train_data = train_dataset(normalization, grayscale=grayscale)
+    valid_data = valid_dataset(normalization, grayscale=grayscale)
 
     return {"train": train_data, "valid": valid_data}
 

@@ -32,8 +32,8 @@ def max_pool_dim(w, h, v):
 
 def layer_calculations(f, p, s):
     """This function calculates the required values for the model"""
-    w = int(constants.default_width * constants.scale)
-    h = int(constants.default_height * constants.scale)
+    w = constants.scaled_width
+    h = constants.scaled_height
 
     print "Input %s x %s x 1 " % (w, h)
 
@@ -122,8 +122,9 @@ def layer_calculations(f, p, s):
 class CNN(nn.Module):
     """This class defines the CNN Model."""
 
-    def __init__(self):
+    def __init__(self, input_channels):
 
+        self.input_channels = input_channels
         kernel_size = 3
         padding = 1
         stride = 1
@@ -136,7 +137,7 @@ class CNN(nn.Module):
         self.layer1 = nn.Sequential(
             nn.ConstantPad2d((padding_left, padding_right,
                               padding_top, padding_bottom), 0),
-            nn.Conv2d(in_channels=1,  # input height
+            nn.Conv2d(in_channels=self.input_channels,  # input height
                       out_channels=32,  # n_filters
                       kernel_size=kernel_size,  # filter size
                       stride=stride,       # filter movement/step
@@ -239,11 +240,8 @@ class CNN(nn.Module):
         self.fc = nn.Linear(1024 * (o_w) * (o_h), 20)
         self.apply(weights_init)
 
-    def summary(self):
+    def summary(self, x):
         """This is a convinence summary fuction."""
-        w = int(constants.default_width * constants.scale)
-        h = int(constants.default_height * constants.scale)
-        x = torch.randn(1, 1, h, w).cuda()
         print x.size()
         out = self.layer1(x)
         print out.size()

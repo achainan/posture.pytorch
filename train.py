@@ -15,13 +15,21 @@ from third_party import AverageMeter
 cuda = torch.cuda.is_available()
 logger = SummaryWriter()
 
-images_mean, images_std, labels_mean, labels_std = constants.normalization_values()
+grayscale = False
+
+images_mean, images_std, labels_mean, labels_std = constants.normalization_values(
+    grayscale=grayscale)
 
 
 def main():
     shuffle = True
 
-    dataset = load_dataset(images_mean, images_std, labels_mean, labels_std)
+    dataset = load_dataset(
+        images_mean,
+        images_std,
+        labels_mean,
+        labels_std,
+        grayscale=grayscale)
     train_dataset = dataset["train"]
     val_dataset = dataset["valid"]
 
@@ -40,15 +48,26 @@ def main():
                                              num_workers=constants.num_workers,
                                              drop_last=True)
 
-    cnn = models.CNN()
+    input_channels = 3
+    if grayscale:
+        input_channels = 1
+
+    random_input = torch.randn(
+        1,
+        input_channels,
+        constants.scaled_height,
+        constants.scaled_width)
+
+    cnn = models.CNN(input_channels)
     if cuda:
         cnn.cuda()
+        random_input = random_input.cuda()
 
-    # cnn.summary()
+    random_input = Variable(random_input, requires_grad=False)
 
-    w = int(constants.default_width * constants.scale)
-    h = int(constants.default_height * constants.scale)
-    h = cnn(Variable(torch.randn(1, 1, h, w).cuda(), requires_grad=False))
+    # cnn.summary(random_input)
+
+    h = cnn(random_input)
     logger.add_graph(cnn, h)
 
     # Optimizer and Loss
@@ -67,7 +86,8 @@ def main():
 
         val_error = validate(val_loader, cnn, criterion, epoch)
 
-        logger.add_scalars('Loss', {"test":val_error, "train":train_error}, epoch)
+        scalars = {"test": val_error, "train": train_error}
+        logger.add_scalars('Loss', scalars, epoch)
 
         if (epoch + 1) % constants.save_interval == 0:
             save_checkpoint(cnn)
@@ -99,8 +119,11 @@ def load_preview(images, outputs):
     image = image * images_std + images_mean
     image = image.squeeze()
     image = image / 255
+    image = image.copy()
 
-    image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+    if grayscale:
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+
     for coordinates in output:
         x = coordinates[0]
         y = coordinates[1]
