@@ -49,10 +49,9 @@ def layer_calculations(f, p, s):
 
     # print (padding_left, padding_right, padding_top, padding_bottom)
 
-    padding_width, padding_height = w + padding_left + \
-        padding_right, h + padding_top + padding_bottom
-    padding_width, padding_height = padding_width, padding_height
-
+    padding_width = w + padding_left + padding_right
+    padding_height = h + padding_top + padding_bottom
+        
     print "After Padding %s x %s x 1 " % (padding_width, padding_height)
 
     # Layer 1
