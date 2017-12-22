@@ -37,20 +37,34 @@ def train_dataset(normalization=None, random=True):
     return train_dataset
 
 
-def load_dataset(images_mean, images_std, labels_mean, labels_std):
+def valid_dataset(normalization=None, random=True):
+    """This function loads the training dataset with the desired transformations."""
+
+    transformations = [Scale(constants.scale)]
+
+    transformations.append(BlackAndWhite())
+
+    if normalization is not None:
+        transformations.append(normalization)
+
+    transformations.append(ToTensor())
+
+    transform = transforms.Compose(transformations)
+
+    valid_dataset = PostureLandmarksDataset(
+        csv_file='B/validation_data.csv',
+        root_dir='B/',
+        transform=transform)
+    return valid_dataset
+
+
+def load_dataset(images_mean, images_std, labels_mean,
+                 labels_std):
     """This function loads the datasets with the desired transformations."""
 
     normalization = Normalize(images_mean, images_std, labels_mean, labels_std)
     train_data = train_dataset(normalization)
-
-    valid_data = PostureLandmarksDataset(csv_file='B/validation_data.csv',
-                                         root_dir='B/',
-                                         transform=transforms.Compose([
-                                             Scale(constants.scale),
-                                             BlackAndWhite(),
-                                             normalization,
-                                             ToTensor()
-                                         ]))
+    valid_data = valid_dataset(normalization)
 
     return {"train": train_data, "valid": valid_data}
 
