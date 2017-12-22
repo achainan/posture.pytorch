@@ -35,7 +35,7 @@ def layer_calculations(f, p, s):
     w = int(constants.default_width * constants.scale)
     h = int(constants.default_height * constants.scale)
 
-    print "Input %s x %s  " % (w, h)
+    print "Input %s x %s x 1 " % (w, h)
 
     padding_left = padding_right = padding_top = padding_bottom = 0
     if w > h:
@@ -53,7 +53,7 @@ def layer_calculations(f, p, s):
         padding_right, h + padding_top + padding_bottom
     padding_width, padding_height = padding_width, padding_height
 
-    print "After Padding %s x %s  " % (padding_width, padding_height)
+    print "After Padding %s x %s x 1 " % (padding_width, padding_height)
 
     # Layer 1
     o_w, o_h = padding_width, padding_height
@@ -61,48 +61,60 @@ def layer_calculations(f, p, s):
     o_w, o_h = conv_dim(o_w, o_h, p, f, s)
     # Max Pool
     o_w, o_h = max_pool_dim(o_w, o_h, 2)
-    print "Layer 1 %s x %s x %s" % (o_w, o_h, 64)
+    print "Layer 1 %s x %s x %s" % (o_w, o_h, 32)
 
     # Layer 2
     o_w, o_h = conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = max_pool_dim(o_w, o_h, 2)
-    print "Layer 2 %s x %s x %s" % (o_w, o_h, 64)
+    print "Layer 2 %s x %s x %s" % (o_w, o_h, 32)
 
     # Layer 3
     o_w, o_h = conv_dim(o_w, o_h, p, f, s)
     o_w, o_h = max_pool_dim(o_w, o_h, 2)
-    print "Layer 3 %s x %s x %s" % (o_w, o_h, 128)
+    print "Layer 3 %s x %s x %s" % (o_w, o_h, 64)
 
     # Layer 4
     o_w, o_h = conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = max_pool_dim(o_w, o_h, 2)
-    print "Layer 4 %s x %s x %s " % (o_w, o_h, 256)
+    print "Layer 4 %s x %s x %s" % (o_w, o_h, 128)
 
     # Layer 5
     o_w, o_h = conv_dim(o_w, o_h, p, f, s)
     o_w, o_h = max_pool_dim(o_w, o_h, 2)
-    print "Layer 5 %s x %s x %s" % (o_w, o_h, 256)
+    print "Layer 5 %s x %s x %s" % (o_w, o_h, 128)
 
     # Layer 6
     o_w, o_h = conv_dim(o_w, o_h, p, f, s)
     o_w, o_h = max_pool_dim(o_w, o_h, 2)
-    print "Layer 6 %s x %s x %s" % (o_w, o_h, 256)
+    print "Layer 6 %s x %s x %s " % (o_w, o_h, 256)
 
     # Layer 7
     o_w, o_h = conv_dim(o_w, o_h, p, f, s)
-    # o_w, o_h = max_pool_dim(o_w, o_h, 2)
-    print "Layer 7 %s x %s x %s" % (o_w, o_h, 512)
+    o_w, o_h = max_pool_dim(o_w, o_h, 2)
+    print "Layer 7 %s x %s x %s" % (o_w, o_h, 256)
 
     # Layer 8
     o_w, o_h = conv_dim(o_w, o_h, p, f, s)
     o_w, o_h = max_pool_dim(o_w, o_h, 2)
-    print "Layer 8 %s x %s x %s" % (o_w, o_h, 512)
+    print "Layer 8 %s x %s x %s" % (o_w, o_h, 256)
 
     # Layer 9
     o_w, o_h = conv_dim(o_w, o_h, p, f, s)
+    # o_w, o_h = max_pool_dim(o_w, o_h, 2)
+    print "Layer 9 %s x %s x %s" % (o_w, o_h, 512)
+
+    # Layer 10
+    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
+    o_w, o_h = max_pool_dim(o_w, o_h, 2)
+    print "Layer 10 %s x %s x %s" % (o_w, o_h, 512)
+
+    # Layer 11
+    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
+    print "Layer 11 %s x %s x %s" % (o_w, o_h, 1024)
+
+    # Layer 12
+    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
     pool = o_w
     o_w, o_h = max_pool_dim(o_w, o_h, pool)
-    print "Layer 9 %s x %s x %s" % (o_w, o_h, 512)
+    print "Layer 12 %s x %s x %s" % (o_w, o_h, 1024)
 
     return o_w, o_h, padding_left, padding_right, padding_top, padding_bottom, pool
 
@@ -125,17 +137,24 @@ class CNN(nn.Module):
             nn.ConstantPad2d((padding_left, padding_right,
                               padding_top, padding_bottom), 0),
             nn.Conv2d(in_channels=1,  # input height
-                      out_channels=64,  # n_filters
+                      out_channels=32,  # n_filters
                       kernel_size=kernel_size,  # filter size
                       stride=stride,       # filter movement/step
                       padding=padding),      # padding
-            nn.BatchNorm2d(64),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Dropout(0.2)
         )
         self.layer2 = nn.Sequential(
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=kernel_size,
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=kernel_size,
+                      stride=stride, padding=padding),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Dropout(0.2)
+        )
+        self.layer3 = nn.Sequential(
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=kernel_size,
                       stride=stride, padding=padding),
             nn.BatchNorm2d(64),
             nn.ReLU(),
@@ -144,15 +163,22 @@ class CNN(nn.Module):
         )
 
         # Block 2
-        self.layer3 = nn.Sequential(
+        self.layer4 = nn.Sequential(
             nn.Conv2d(in_channels=64, out_channels=128, kernel_size=kernel_size,
+                      stride=stride, padding=padding),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Dropout(0.2)
+        )
+        self.layer5 = nn.Sequential(
+            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=kernel_size,
                       stride=stride, padding=padding),
             nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Dropout(0.2)
         )
-        self.layer4 = nn.Sequential(
+        self.layer6 = nn.Sequential(
             nn.Conv2d(in_channels=128, out_channels=256, kernel_size=kernel_size,
                       stride=stride, padding=padding),
             nn.BatchNorm2d(256),
@@ -160,7 +186,7 @@ class CNN(nn.Module):
             nn.MaxPool2d(2),
             nn.Dropout(0.2)
         )
-        self.layer5 = nn.Sequential(
+        self.layer7 = nn.Sequential(
             nn.Conv2d(in_channels=256, out_channels=256, kernel_size=kernel_size,
                       stride=stride, padding=padding),
             nn.BatchNorm2d(256),
@@ -168,7 +194,7 @@ class CNN(nn.Module):
             nn.MaxPool2d(2),
             nn.Dropout(0.2)
         )
-        self.layer6 = nn.Sequential(
+        self.layer8 = nn.Sequential(
             nn.Conv2d(in_channels=256, out_channels=512, kernel_size=kernel_size,
                       stride=stride, padding=padding),
             nn.BatchNorm2d(512),
@@ -178,7 +204,7 @@ class CNN(nn.Module):
         )
 
         # Block 5
-        self.layer7 = nn.Sequential(
+        self.layer9 = nn.Sequential(
             nn.Conv2d(in_channels=512, out_channels=512, kernel_size=kernel_size,
                       stride=stride, padding=padding),
             nn.BatchNorm2d(512),
@@ -186,7 +212,7 @@ class CNN(nn.Module):
             # nn.MaxPool2d(2),
             nn.Dropout(0.2)
         )
-        self.layer8 = nn.Sequential(
+        self.layer10 = nn.Sequential(
             nn.Conv2d(in_channels=512, out_channels=512, kernel_size=kernel_size,
                       stride=stride, padding=padding),
             nn.BatchNorm2d(512),
@@ -194,16 +220,23 @@ class CNN(nn.Module):
             nn.MaxPool2d(2),
             nn.Dropout(0.2)
         )
-        self.layer9 = nn.Sequential(
-            nn.Conv2d(in_channels=512, out_channels=512, kernel_size=kernel_size,
+        self.layer11 = nn.Sequential(
+            nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=kernel_size,
                       stride=stride, padding=padding),
-            nn.BatchNorm2d(512),
+            nn.BatchNorm2d(1024),
+            nn.ReLU(),
+            nn.Dropout(0.2)
+        )
+        self.layer12 = nn.Sequential(
+            nn.Conv2d(in_channels=1024, out_channels=1024, kernel_size=kernel_size,
+                      stride=stride, padding=padding),
+            nn.BatchNorm2d(1024),
             nn.ReLU(),
             nn.MaxPool2d(pool),
             nn.Dropout(0.2)
         )
         # print pool
-        self.fc = nn.Linear(512 * (o_w) * (o_h), 20)
+        self.fc = nn.Linear(1024 * (o_w) * (o_h), 20)
         self.apply(weights_init)
 
     def summary(self):
@@ -230,6 +263,12 @@ class CNN(nn.Module):
         print out.size()
         out = self.layer9(out)
         print out.size()
+        out = self.layer10(out)
+        print out.size()
+        out = self.layer11(out)
+        print out.size()
+        out = self.layer12(out)
+        print out.size()
         out = out.view(out.size(0), -1)
         out = self.fc(out)
 
@@ -243,6 +282,9 @@ class CNN(nn.Module):
         out = self.layer7(out)
         out = self.layer8(out)
         out = self.layer9(out)
+        out = self.layer10(out)
+        out = self.layer11(out)
+        out = self.layer12(out)
         out = out.view(out.size(0), -1)
         out = self.fc(out)
         return out
