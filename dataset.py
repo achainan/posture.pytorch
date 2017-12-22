@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 import pandas as pd
 import numpy as np
 import scipy.misc
+import scipy.ndimage as ndi
 import torchvision
 from torchvision import transforms
 import constants
@@ -204,5 +205,40 @@ class Normalize(object):
 
         image = (image - self.images_mean) / self.images_std
         landmarks = (landmarks - self.labels_mean) / self.labels_std
+
+        return {'image': image, 'landmarks': landmarks}
+
+
+class RandomRotation(object):
+    """Rotate the image by a random angle."""
+
+    def __init__(self, degrees):
+        self.degrees = degrees
+
+    @staticmethod
+    def get_params(degrees):
+        angle = np.random.uniform(degrees[0], degrees[1])
+        return angle
+
+    def __call__(self, sample):
+        image = np.array(sample['image'], copy=True, dtype=np.float32)
+        landmarks = np.array(sample['landmarks'], copy=True, dtype=np.float32)
+
+        angle = self.get_params(self.degrees)
+
+        # Rotate the image
+        image = ndi.rotate(image, angle, cval=255, reshape=False)
+
+        # Rotate the landmarks
+        org_center = (np.array(image.shape[:2][::-1]) - 1) / 2.
+        org = np.zeros(landmarks.shape)
+        org[:, 0] = landmarks[:, 0] - org_center[0]
+        org[:, 1] = landmarks[:, 1] - org_center[1]
+        a = np.deg2rad(angle)
+        new = np.zeros(landmarks.shape)
+        new[:, 0] = org[:, 0] * np.cos(a) + org[:, 1] * np.sin(a)
+        new[:, 1] = -org[:, 0] * np.sin(a) + org[:, 1] * np.cos(a)
+        landmarks[:, 0] = new[:, 0] + org_center[0]
+        landmarks[:, 1] = new[:, 1] + org_center[1]
 
         return {'image': image, 'landmarks': landmarks}
