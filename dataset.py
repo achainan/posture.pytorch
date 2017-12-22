@@ -12,8 +12,6 @@ from torchvision import transforms
 import constants
 from third_party import apply_transform
 
-images_mean, images_std, labels_mean, labels_std = 216.91674805, 51.54261398, 147.78466797, 57.77311325
-
 
 def train_dataset(normalization=None, random=True):
     """This function loads the training dataset with the desired transformations."""
@@ -39,7 +37,7 @@ def train_dataset(normalization=None, random=True):
     return train_dataset
 
 
-def load_dataset():
+def load_dataset(images_mean, images_std, labels_mean, labels_std):
     """This function loads the datasets with the desired transformations."""
 
     normalization = Normalize(images_mean, images_std, labels_mean, labels_std)
@@ -186,7 +184,6 @@ class ToTensor(object):
         image = image.transpose((2, 0, 1))
         image = torch.from_numpy(image)
 
-        landmarks = landmarks.reshape(1, -1)
         return image.float(), torch.from_numpy(landmarks).float()
 
 
@@ -204,6 +201,7 @@ class Normalize(object):
             sample['landmarks'], copy=True, dtype=np.float32)
 
         image = (image - self.images_mean) / self.images_std
+
         landmarks = (landmarks - self.labels_mean) / self.labels_std
 
         return {'image': image, 'landmarks': landmarks}

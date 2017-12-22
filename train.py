@@ -15,13 +15,13 @@ from third_party import AverageMeter
 cuda = torch.cuda.is_available()
 logger = SummaryWriter()
 
-images_mean, images_std, labels_mean, labels_std = 216.91674805, 51.54261398, 147.78466797, 57.77311325
+images_mean, images_std, labels_mean, labels_std = constants.normalization_values()
 
 
 def main():
     shuffle = True
 
-    dataset = load_dataset()
+    dataset = load_dataset(images_mean, images_std, labels_mean, labels_std)
     train_dataset = dataset["train"]
     val_dataset = dataset["valid"]
 
@@ -46,6 +46,11 @@ def main():
 
     # cnn.summary()
 
+    w = int(constants.default_width * constants.scale)
+    h = int(constants.default_height * constants.scale)
+    h = cnn(Variable(torch.randn(1, 1, h, w).cuda(), requires_grad=False))
+    logger.add_graph(cnn, h)
+
     # Optimizer and Loss
     optimizer = torch.optim.Adam(cnn.parameters(), lr=constants.learning_rate)
     criterion = nn.MSELoss()
@@ -54,7 +59,9 @@ def main():
 
     best_val_error = None
     # Train the Model
-        
+
+    assert len(train_loader) != 1, "The train loader length is 1"
+
     for epoch in range(constants.num_epochs):
         train_error = train(train_loader, cnn, optimizer, criterion, epoch)
 
@@ -83,17 +90,18 @@ def save_checkpoint(model, filename='result/cnn_checkpoint.pth'):
 def load_preview(images, outputs):
     """This function logs a preview image to tensorboard"""
     image = images.data[0].cpu().numpy()
-    output = outputs.data[0].view(1, -1, 2).cpu().numpy()
+    output = outputs.data[0].cpu().numpy()
     image = np.rollaxis(image, 0, 3)
-    image = image.squeeze()
 
+    output = output.reshape(-1, 2)
     output = output * labels_std + labels_mean
 
     image = image * images_std + images_mean
+    image = image.squeeze()
     image = image / 255
 
     image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-    for coordinates in output[0]:
+    for coordinates in output:
         x = coordinates[0]
         y = coordinates[1]
         circle_size = 2
@@ -128,7 +136,7 @@ def validate(loader, model, criterion, epoch):
             logger.add_image('Val/Output', preview, i + 1)
             print('[VALID] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
                   % (epoch + 1, constants.num_epochs, losses.val, losses.avg))
-                  
+
     return losses.avg
 
 
@@ -165,6 +173,7 @@ def train(loader, model, optimizer, criterion, epoch):
                   % (epoch + 1, constants.num_epochs, losses.val, losses.avg))
 
     return losses.avg
+
 
 if __name__ == '__main__':
     main()

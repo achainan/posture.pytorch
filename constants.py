@@ -10,3 +10,7 @@ default_width = 670
 default_height = 760
 save_interval = 20
 print_freq = 10
+
+
+def normalization_values():
+    return 216.91674805, 51.54261398, 147.78466797, 57.77311325
