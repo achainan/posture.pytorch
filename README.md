@@ -36,4 +36,11 @@ You can see the progress via tensorboard by running `tensorboard --logdir runs` 
 
 This code is still under development.
 Currently, we have small amount of annotated data.
-Please note that currently the validation_data.csv is the same as the train_data.csv. This will change once we gather enough annotated data.
+
+
+## Changelog
+
+- New validation data has been added. 
+- Removing warning: Please note that currently the validation_data.csv is the same as the train_data.csv. This will change once we gather enough annotated data.
+- Face center coordinates have been added to the training and validation dataset.
+
