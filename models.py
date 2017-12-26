@@ -236,7 +236,7 @@ class CNN(nn.Module):
             nn.Dropout(0.2)
         )
         # print pool
-        self.fc = nn.Linear(1024 * (o_w) * (o_h), 20)
+        self.fc = nn.Linear(1024 * (o_w) * (o_h), 22)
         self.apply(weights_init)
 
     def summary(self, x):
