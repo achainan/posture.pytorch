@@ -3,6 +3,7 @@
 import torch
 import torch.nn as nn
 import constants
+import calculations as M
 
 w_bound = 0.005
 
@@ -15,20 +16,6 @@ def weights_init(m):
     elif classname.find('Linear') != -1:
         m.weight.data.uniform_(-w_bound, w_bound)
         m.bias.data.fill_(0)
-
-
-def conv_dim(w, h, p, f, s):
-    # (n + 2p - f)/ s + 1
-    o_w = (w + 2 * p - f) / s + 1
-    o_h = (h + 2 * p - f) / s + 1
-    return o_w, o_h
-
-
-def max_pool_dim(w, h, v):
-    o_w = w / v
-    o_h = h / v
-    return o_w, o_h
-
 
 def layer_calculations(f, p, s):
     """This function calculates the required values for the model"""
@@ -57,62 +44,62 @@ def layer_calculations(f, p, s):
     # Layer 1
     o_w, o_h = padding_width, padding_height
     # Convolution 2D
-    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
+    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
     # Max Pool
-    o_w, o_h = max_pool_dim(o_w, o_h, 2)
+    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
     print "Layer 1 %s x %s x %s" % (o_w, o_h, 32)
 
     # Layer 2
-    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
+    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
     print "Layer 2 %s x %s x %s" % (o_w, o_h, 32)
 
     # Layer 3
-    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = max_pool_dim(o_w, o_h, 2)
+    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
+    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
     print "Layer 3 %s x %s x %s" % (o_w, o_h, 64)
 
     # Layer 4
-    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
+    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
     print "Layer 4 %s x %s x %s" % (o_w, o_h, 128)
 
     # Layer 5
-    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = max_pool_dim(o_w, o_h, 2)
+    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
+    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
     print "Layer 5 %s x %s x %s" % (o_w, o_h, 128)
 
     # Layer 6
-    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = max_pool_dim(o_w, o_h, 2)
+    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
+    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
     print "Layer 6 %s x %s x %s " % (o_w, o_h, 256)
 
     # Layer 7
-    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = max_pool_dim(o_w, o_h, 2)
+    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
+    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
     print "Layer 7 %s x %s x %s" % (o_w, o_h, 256)
 
     # Layer 8
-    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = max_pool_dim(o_w, o_h, 2)
+    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
+    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
     print "Layer 8 %s x %s x %s" % (o_w, o_h, 256)
 
     # Layer 9
-    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
-    # o_w, o_h = max_pool_dim(o_w, o_h, 2)
+    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
+    # o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
     print "Layer 9 %s x %s x %s" % (o_w, o_h, 512)
 
     # Layer 10
-    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = max_pool_dim(o_w, o_h, 2)
+    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
+    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
     print "Layer 10 %s x %s x %s" % (o_w, o_h, 512)
 
     # Layer 11
-    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
+    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
     print "Layer 11 %s x %s x %s" % (o_w, o_h, 1024)
 
     # Layer 12
-    o_w, o_h = conv_dim(o_w, o_h, p, f, s)
+    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
     pool = o_w
-    o_w, o_h = max_pool_dim(o_w, o_h, pool)
+    o_w, o_h = M.max_pool_dim(o_w, o_h, pool)
     print "Layer 12 %s x %s x %s" % (o_w, o_h, 1024)
 
     return o_w, o_h, padding_left, padding_right, padding_top, padding_bottom, pool
