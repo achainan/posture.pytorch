@@ -167,7 +167,9 @@ class CNN(nn.Module):
     def summary(self, x):
         """This is a convinence summary fuction."""
         print x.size()
-        out = self.layer1(x)
+        out = self.pad(x)
+        print out.size()
+        out = self.layer1(out)
         print out.size()
         out = self.layer2(out)
         print out.size()
@@ -195,7 +197,8 @@ class CNN(nn.Module):
         out = self.fc(out)
 
     def forward(self, x):
-        out = self.layer1(x)
+        out = self.pad(x)
+        out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
