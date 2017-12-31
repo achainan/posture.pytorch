@@ -121,6 +121,25 @@ def layer_calculations(f, p, s):
 class CNN(nn.Module):
     """This class defines the CNN Model."""
 
+    def default_layer(self, kernel_size, stride, padding, in_channels, out_channels, max_pool=True):
+        dropout = 0.2
+        conv = nn.Conv2d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding)
+            
+        modules = []
+        modules.append(conv)
+        modules.append(nn.BatchNorm2d(out_channels))
+        modules.append(nn.ReLU())        
+        if max_pool:
+            modules.append(nn.MaxPool2d(2))
+        modules.append(nn.Dropout(dropout))
+
+        return nn.Sequential(*modules)
+
     def __init__(self, input_channels):
 
         self.input_channels = input_channels
@@ -133,100 +152,19 @@ class CNN(nn.Module):
 
         super(CNN, self).__init__()
         # Block 1
-        self.layer1 = nn.Sequential(
-            nn.ConstantPad2d((padding_left, padding_right,
-                              padding_top, padding_bottom), 0),
-            nn.Conv2d(in_channels=self.input_channels,  # input height
-                      out_channels=32,  # n_filters
-                      kernel_size=kernel_size,  # filter size
-                      stride=stride,       # filter movement/step
-                      padding=padding),      # padding
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Dropout(0.2)
-        )
-        self.layer2 = nn.Sequential(
-            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=kernel_size,
-                      stride=stride, padding=padding),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.Dropout(0.2)
-        )
-        self.layer3 = nn.Sequential(
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=kernel_size,
-                      stride=stride, padding=padding),
-            nn.BatchNorm2d(64),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Dropout(0.2)
-        )
+        self.pad = nn.ConstantPad2d((padding_left, padding_right, padding_top, padding_bottom), 0)
+        self.layer1 = self.default_layer(kernel_size, stride, padding, in_channels=self.input_channels, out_channels=32, max_pool=True)
+        self.layer2 = self.default_layer(kernel_size, stride, padding, in_channels=32, out_channels=32, max_pool=False)
+        self.layer3 = self.default_layer(kernel_size, stride, padding, in_channels=32, out_channels=64, max_pool=True)
+        self.layer4 = self.default_layer(kernel_size, stride, padding, in_channels=64, out_channels=128, max_pool=False)
+        self.layer5 = self.default_layer(kernel_size, stride, padding, in_channels=128, out_channels=128, max_pool=True)
+        self.layer6 = self.default_layer(kernel_size, stride, padding, in_channels=128, out_channels=256, max_pool=True)
+        self.layer7 = self.default_layer(kernel_size, stride, padding, in_channels=256, out_channels=256, max_pool=True)
+        self.layer8 = self.default_layer(kernel_size, stride, padding, in_channels=256, out_channels=512, max_pool=True)
+        self.layer9 = self.default_layer(kernel_size, stride, padding, in_channels=512, out_channels=512, max_pool=False)
+        self.layer10 = self.default_layer(kernel_size, stride, padding, in_channels=512, out_channels=512, max_pool=True)
+        self.layer11 = self.default_layer(kernel_size, stride, padding, in_channels=512, out_channels=1024, max_pool=False)
 
-        # Block 2
-        self.layer4 = nn.Sequential(
-            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=kernel_size,
-                      stride=stride, padding=padding),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
-            nn.Dropout(0.2)
-        )
-        self.layer5 = nn.Sequential(
-            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=kernel_size,
-                      stride=stride, padding=padding),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Dropout(0.2)
-        )
-        self.layer6 = nn.Sequential(
-            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=kernel_size,
-                      stride=stride, padding=padding),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Dropout(0.2)
-        )
-        self.layer7 = nn.Sequential(
-            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=kernel_size,
-                      stride=stride, padding=padding),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Dropout(0.2)
-        )
-        self.layer8 = nn.Sequential(
-            nn.Conv2d(in_channels=256, out_channels=512, kernel_size=kernel_size,
-                      stride=stride, padding=padding),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Dropout(0.2)
-        )
-
-        # Block 5
-        self.layer9 = nn.Sequential(
-            nn.Conv2d(in_channels=512, out_channels=512, kernel_size=kernel_size,
-                      stride=stride, padding=padding),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            # nn.MaxPool2d(2),
-            nn.Dropout(0.2)
-        )
-        self.layer10 = nn.Sequential(
-            nn.Conv2d(in_channels=512, out_channels=512, kernel_size=kernel_size,
-                      stride=stride, padding=padding),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Dropout(0.2)
-        )
-        self.layer11 = nn.Sequential(
-            nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=kernel_size,
-                      stride=stride, padding=padding),
-            nn.BatchNorm2d(1024),
-            nn.ReLU(),
-            nn.Dropout(0.2)
-        )
         self.layer12 = nn.Sequential(
             nn.Conv2d(in_channels=1024, out_channels=1024, kernel_size=kernel_size,
                       stride=stride, padding=padding),
