@@ -108,7 +108,7 @@ def layer_calculations(f, p, s):
 class CNN(nn.Module):
     """This class defines the CNN Model."""
 
-    def default_layer(self, kernel_size, stride, padding, in_channels, out_channels, max_pool=True):
+    def default_layer(self, in_channels, out_channels, max_pool=True, kernel_size=3, stride=1, padding=1):
         dropout = 0.2
         conv = nn.Conv2d(
             in_channels=in_channels,
@@ -139,20 +139,45 @@ class CNN(nn.Module):
 
         super(CNN, self).__init__()
         # Block 1
-        self.pad = nn.ConstantPad2d((padding_left, padding_right, padding_top, padding_bottom), 0)
-        self.layer1 = self.default_layer(kernel_size, stride, padding, in_channels=self.input_channels, out_channels=32, max_pool=True)
-        self.layer2 = self.default_layer(kernel_size, stride, padding, in_channels=32, out_channels=32, max_pool=False)
-        self.layer3 = self.default_layer(kernel_size, stride, padding, in_channels=32, out_channels=64, max_pool=True)
-        self.layer4 = self.default_layer(kernel_size, stride, padding, in_channels=64, out_channels=128, max_pool=False)
-        self.layer5 = self.default_layer(kernel_size, stride, padding, in_channels=128, out_channels=128, max_pool=True)
-        self.layer6 = self.default_layer(kernel_size, stride, padding, in_channels=128, out_channels=256, max_pool=True)
-        self.layer7 = self.default_layer(kernel_size, stride, padding, in_channels=256, out_channels=256, max_pool=True)
-        self.layer8 = self.default_layer(kernel_size, stride, padding, in_channels=256, out_channels=512, max_pool=True)
-        self.layer9 = self.default_layer(kernel_size, stride, padding, in_channels=512, out_channels=512, max_pool=False)
-        self.layer10 = self.default_layer(kernel_size, stride, padding, in_channels=512, out_channels=512, max_pool=True)
-        self.layer11 = self.default_layer(kernel_size, stride, padding, in_channels=512, out_channels=1024, max_pool=False)
+        self.layers = nn.ModuleList()        
+        
+        layer = nn.ConstantPad2d((padding_left, padding_right, padding_top, padding_bottom), 0)
+        self.layers.append(layer)
+        
+        layer = self.default_layer(in_channels=self.input_channels, out_channels=32, max_pool=True)
+        self.layers.append(layer)
+        
+        layer = self.default_layer(in_channels=32, out_channels=32, max_pool=False)
+        self.layers.append(layer)
+        
+        layer = self.default_layer(in_channels=32, out_channels=64, max_pool=True)
+        self.layers.append(layer)
+        
+        layer = self.default_layer(in_channels=64, out_channels=128, max_pool=False)
+        self.layers.append(layer)
+        
+        layer = self.default_layer(in_channels=128, out_channels=128, max_pool=True)
+        self.layers.append(layer)
+        
+        layer = self.default_layer(in_channels=128, out_channels=256, max_pool=True)
+        self.layers.append(layer)
+        
+        layer = self.default_layer(in_channels=256, out_channels=256, max_pool=True)
+        self.layers.append(layer)
+        
+        layer = self.default_layer(in_channels=256, out_channels=512, max_pool=True)
+        self.layers.append(layer)
+        
+        layer = self.default_layer(in_channels=512, out_channels=512, max_pool=False)
+        self.layers.append(layer)
+        
+        layer = self.default_layer(in_channels=512, out_channels=512, max_pool=True)
+        self.layers.append(layer)
+        
+        layer = self.default_layer(in_channels=512, out_channels=1024, max_pool=False)
+        self.layers.append(layer)
 
-        self.layer12 = nn.Sequential(
+        layer = nn.Sequential(
             nn.Conv2d(in_channels=1024, out_channels=1024, kernel_size=kernel_size,
                       stride=stride, padding=padding),
             nn.BatchNorm2d(1024),
@@ -160,56 +185,27 @@ class CNN(nn.Module):
             nn.MaxPool2d(pool),
             nn.Dropout(0.2)
         )
+        self.layers.append(layer)
+        
         # print pool
         self.fc = nn.Linear(1024 * (o_w) * (o_h), 22)
         self.apply(weights_init)
 
     def summary(self, x):
         """This is a convinence summary fuction."""
-        print x.size()
-        out = self.pad(x)
-        print out.size()
-        out = self.layer1(out)
-        print out.size()
-        out = self.layer2(out)
-        print out.size()
-        out = self.layer3(out)
-        print out.size()
-        out = self.layer4(out)
-        print out.size()
-        out = self.layer5(out)
-        print out.size()
-        out = self.layer6(out)
-        print out.size()
-        out = self.layer7(out)
-        print out.size()
-        out = self.layer8(out)
-        print out.size()
-        out = self.layer9(out)
-        print out.size()
-        out = self.layer10(out)
-        print out.size()
-        out = self.layer11(out)
-        print out.size()
-        out = self.layer12(out)
-        print out.size()
-        out = out.view(out.size(0), -1)
+        for i, l in enumerate(self.layers):
+            x = l(x)
+            print x.size()
+        
+        out = x.view(x.size(0), -1)
         out = self.fc(out)
+        return out
+
 
     def forward(self, x):
-        out = self.pad(x)
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = self.layer4(out)
-        out = self.layer5(out)
-        out = self.layer6(out)
-        out = self.layer7(out)
-        out = self.layer8(out)
-        out = self.layer9(out)
-        out = self.layer10(out)
-        out = self.layer11(out)
-        out = self.layer12(out)
-        out = out.view(out.size(0), -1)
+        for i, l in enumerate(self.layers):
+            x = l(x)
+        
+        out = x.view(x.size(0), -1)
         out = self.fc(out)
         return out
