@@ -38,14 +38,12 @@ def main():
                                                batch_size=constants.train_batch_size,
                                                shuffle=shuffle,
                                                pin_memory=cuda,
-                                               num_workers=constants.num_workers,
                                                drop_last=True)
 
     val_loader = torch.utils.data.DataLoader(dataset=val_dataset,
                                              batch_size=constants.val_batch_size,
                                              shuffle=shuffle,
                                              pin_memory=cuda,
-                                             num_workers=constants.num_workers,
                                              drop_last=True)
 
     input_channels = 3
@@ -99,7 +97,7 @@ def main():
 
     # Save the Trained Model
     torch.save(cnn.state_dict(), 'result/cnn.pkl')
-    torch.save(cnn, 'result/cnn.pth')
+    torch.save(cnn, 'result/posture.pth')
 
 
 def save_checkpoint(model, filename='result/cnn_checkpoint.pth'):
@@ -127,7 +125,7 @@ def load_preview(images, outputs):
     for coordinates in output:
         x = coordinates[0]
         y = coordinates[1]
-        circle_size = 2
+        circle_size = 5
         cv2.circle(image, (int(x), int(y)), circle_size, (0, 0, 255), -1)
 
     return image
@@ -155,10 +153,12 @@ def validate(loader, model, criterion, epoch):
         logger.add_scalar('Val/Loss', loss.data[0], niter)
 
         if i % constants.print_freq == 0:
-            preview = load_preview(images, outputs)
-            logger.add_image('Val/Output', preview, i + 1)
             print('[VALID] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
                   % (epoch + 1, constants.num_epochs, losses.val, losses.avg))
+
+    if epoch % constants.display_freq == 0:
+        preview = load_preview(images, outputs)
+        logger.add_image('Val/Output', preview, i + 1)
 
     return losses.avg
 
@@ -189,11 +189,12 @@ def train(loader, model, optimizer, criterion, epoch):
         logger.add_scalar('Train/Loss', loss.data[0], niter)
 
         if i % constants.print_freq == 0:
-            preview = load_preview(images, outputs)
-            logger.add_image('Train/Output', preview, i + 1)
-
             print('[TRAIN] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
                   % (epoch + 1, constants.num_epochs, losses.val, losses.avg))
+
+    if epoch % constants.display_freq == 0:
+        preview = load_preview(images, outputs)
+        logger.add_image('Train/Output', preview, i + 1)
 
     return losses.avg
 
