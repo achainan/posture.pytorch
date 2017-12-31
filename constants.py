@@ -1,17 +1,17 @@
 """While in development instead of args using a constants file"""
 
 num_epochs = 2000
-train_batch_size = 114
-val_batch_size = 12
+train_batch_size = 1  # Since we have so little data currently
+val_batch_size = 1  # Since we have so little data currently
 learning_rate = 0.001
-num_workers = 10
-scale = .4
+scale = .5
 default_width = 670
 default_height = 760
 scaled_width = int(scale * default_width)
 scaled_height = int(scale * default_height)
 save_interval = 20
 print_freq = 10
+display_freq = 2  # Save preview to tensorboard ever X epochs
 
 
 def normalization_values(grayscale=True):
