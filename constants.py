@@ -12,6 +12,7 @@ scaled_height = int(scale * default_height)
 save_interval = 20
 print_freq = 10
 display_freq = 2  # Save preview to tensorboard ever X epochs
+grayscale = False
 
 
 def normalization_values(grayscale=True):
