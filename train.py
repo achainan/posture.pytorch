@@ -96,7 +96,7 @@ def main():
     logger.close()
 
     # Save the Trained Model
-    torch.save(cnn.state_dict(), 'result/cnn.pkl')
+    torch.save(cnn.state_dict(), 'result/posture.pkl')
     torch.save(cnn, 'result/posture.pth')
 
 
