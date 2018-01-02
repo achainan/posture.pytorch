@@ -1,10 +1,10 @@
 """While in development instead of args using a constants file"""
 
 num_epochs = 2000
-train_batch_size = 1  # Since we have so little data currently
+train_batch_size = 3  # Since we have so little data currently
 val_batch_size = 1  # Since we have so little data currently
 learning_rate = 0.001
-scale = .5
+scale = 256.0/760.0
 default_width = 670
 default_height = 760
 scaled_width = int(scale * default_width)
