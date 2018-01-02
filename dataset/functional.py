@@ -14,7 +14,7 @@ def square(image):
         x = (height - width)/2
         shape = (height, height, 3)
         
-    square = np.zeros((shape), np.uint8)
+    square = np.zeros((shape), np.float32)
     square[y:y+height, x:x+width] = image
 
     return square, x, y
