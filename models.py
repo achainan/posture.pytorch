@@ -18,22 +18,12 @@ def weights_init(m):
         m.bias.data.fill_(0)
 
 
-def layer_calculations(f, p, s):
+def layer_calculations(f, p, s, w, h):
     """This function calculates the required values for the model"""
-    w = constants.scaled_width
-    h = constants.scaled_height
-
     print "Input %s x %s x 1 " % (w, h)
 
-    padding_left, padding_right, padding_top, padding_bottom = M.pad_to_square(
-        w, h)
-    padding_width = w + padding_left + padding_right
-    padding_height = h + padding_top + padding_bottom
-
-    print "After Padding %s x %s x 1 " % (padding_width, padding_height)
-
     # Layer 1
-    o_w, o_h = padding_width, padding_height
+    o_w, o_h = w, h
     # Convolution 2D
     o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
     # Max Pool
@@ -93,15 +83,14 @@ def layer_calculations(f, p, s):
     o_w, o_h = M.max_pool_dim(o_w, o_h, pool)
     print "Layer 12 %s x %s x %s" % (o_w, o_h, 1024)
 
-    return o_w, o_h, padding_left, padding_right, padding_top, padding_bottom, pool
+    return o_w, o_h, pool
 
 
 class CNN(nn.Module):
     """This class defines the CNN Model."""
 
     def default_layer(self, in_channels, out_channels,
-                      max_pool=True, kernel_size=3, stride=1, padding=1):
-        dropout = 0.2
+                      max_pool=True, kernel_size=3, stride=1, padding=1, dropout=0.2):
         conv = nn.Conv2d(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -126,16 +115,14 @@ class CNN(nn.Module):
         padding = 1
         stride = 1
 
-        o_w, o_h, padding_left, padding_right, padding_top, padding_bottom, pool = layer_calculations(
-            kernel_size, padding, stride)
+        # Since the height is greater than the width in our data we square the data
+        width = height = constants.scaled_height
+
+        o_w, o_h, pool = layer_calculations(kernel_size, padding, stride, width, height)
 
         super(CNN, self).__init__()
         # Block 1
         self.layers = nn.ModuleList()
-
-        layer = nn.ConstantPad2d(
-            (padding_left, padding_right, padding_top, padding_bottom), 0)
-        self.layers.append(layer)
 
         layer = self.default_layer(self.input_channels, 32, max_pool=True)
         self.layers.append(layer)
@@ -185,6 +172,7 @@ class CNN(nn.Module):
         self.apply(weights_init)
 
     def summary(self, x):
+        print x.size()
         """This is a convinence summary fuction."""
         for i, l in enumerate(self.layers):
             x = l(x)

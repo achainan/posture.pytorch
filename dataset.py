@@ -16,7 +16,7 @@ from third_party import apply_transform
 def train_dataset(normalization=None, random=True, grayscale=True):
     """This function loads the training dataset with the desired transformations."""
 
-    transformations = [Scale(constants.scale)]
+    transformations = [Scale(constants.scale), Square()]
     if random:
         transformations.append(RandomHorizontalFlip())
         transformations.append(RandomShift(100 * constants.scale))
@@ -41,7 +41,7 @@ def train_dataset(normalization=None, random=True, grayscale=True):
 def valid_dataset(normalization=None, grayscale=True):
     """This function loads the training dataset with the desired transformations."""
 
-    transformations = [Scale(constants.scale)]
+    transformations = [Scale(constants.scale), Square()]
 
     if grayscale:
         transformations.append(BlackAndWhite())
@@ -98,10 +98,38 @@ class PostureLandmarksDataset(Dataset):
 
         return item
 
+class Square(object):
+    """Padd the image to make a square in a sample."""
+
+    def __call__(self, sample):
+        image, landmarks = np.array(sample['image'], copy=True, dtype=np.float32), np.array(
+            sample['landmarks'], copy=True, dtype=np.float32)
+
+        height = image.shape[0]
+        width = image.shape[1]
+        x = 0
+        y = 0
+        shape = (height, width, 3)
+        if width > height:
+            y = (height - width)/2
+            shape = (width, width, 3)
+        elif height > width:
+            x = (height - width)/2
+            shape = (height, height, 3)
+            
+        square = np.zeros((shape), np.uint8)
+        square[y:y+height, x:x+width] = image
+
+        image = square
+
+        landmarks[:, 0] += x
+        landmarks[:, 1] += y
+
+        return {'image': image, 'landmarks': landmarks}
+
 
 class Scale(object):
-    """Random shift the image in a sample.
-    """
+    """Scale the image in a sample."""
 
     def __init__(self, size):
         self.size = size

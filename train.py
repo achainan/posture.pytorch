@@ -48,14 +48,18 @@ def main():
     if constants.grayscale:
         input_channels = 1
 
+    # We use the random input for testing purposes
+    # We square our data hence the shape's width is equal to its height the longer side
     random_input = torch.randn(
         1,
         input_channels,
         constants.scaled_height,
-        constants.scaled_width)
+        constants.scaled_height)
 
     cnn = models.CNN(input_channels)
+    criterion = nn.MSELoss()
     if cuda:
+        criterion.cuda()
         cnn.cuda()
         random_input = random_input.cuda()
 
@@ -68,9 +72,6 @@ def main():
 
     # Optimizer and Loss
     optimizer = torch.optim.Adam(cnn.parameters(), lr=constants.learning_rate)
-    criterion = nn.MSELoss()
-    if cuda:
-        criterion.cuda()
 
     best_val_error = None
     # Train the Model
@@ -179,6 +180,14 @@ def train(loader, model, optimizer, criterion, epoch):
             images_std,
             images_mean)
         logger.add_image('Train/Output', preview, i + 1)
+        target = P.load_preview(
+            images,
+            labels,
+            labels_std,
+            labels_mean,
+            images_std,
+            images_mean)
+        logger.add_image('Train/Target', target, i + 1)
 
     return losses.avg
 
