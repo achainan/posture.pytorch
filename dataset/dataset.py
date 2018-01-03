@@ -15,10 +15,12 @@ import functional as F
 def train_dataset(normalization=None, random=True, grayscale=True):
     """This function loads the training dataset with the desired transformations."""
 
-    transformations = [Scale(constants.scale), Square()]
+    transformations = [Scale(constants.scale)]
     if random:
         transformations.append(RandomHorizontalFlip())
         transformations.append(RandomShift(100 * constants.scale))
+
+    transformations.append(Square())
 
     if grayscale:
         transformations.append(BlackAndWhite())
@@ -40,7 +42,9 @@ def train_dataset(normalization=None, random=True, grayscale=True):
 def valid_dataset(normalization=None, grayscale=True):
     """This function loads the training dataset with the desired transformations."""
 
-    transformations = [Scale(constants.scale), Square()]
+    transformations = [Scale(constants.scale)]
+
+    transformations.append(Square())
 
     if grayscale:
         transformations.append(BlackAndWhite())

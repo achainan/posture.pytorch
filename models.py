@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import constants
 import calculations as M
+import math
 
 w_bound = 0.005
 
@@ -18,72 +19,22 @@ def weights_init(m):
         m.bias.data.fill_(0)
 
 
-def layer_calculations(f, p, s, w, h):
+def layer_calcuation(o_w, o_h, p, f, s, max_pool=True):
+    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
+    if max_pool:
+        o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
+    return o_w, o_h
+
+def layer_calculations(f, p, s, w, h, num_downs):
     """This function calculates the required values for the model"""
     print "Input %s x %s x 1 " % (w, h)
 
-    # Layer 1
     o_w, o_h = w, h
-    # Convolution 2D
-    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
-    # Max Pool
-    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
-    print "Layer 1 %s x %s x %s" % (o_w, o_h, 32)
-
-    # Layer 2
-    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
-    print "Layer 2 %s x %s x %s" % (o_w, o_h, 32)
-
-    # Layer 3
-    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
-    print "Layer 3 %s x %s x %s" % (o_w, o_h, 64)
-
-    # Layer 4
-    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
-    print "Layer 4 %s x %s x %s" % (o_w, o_h, 128)
-
-    # Layer 5
-    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
-    print "Layer 5 %s x %s x %s" % (o_w, o_h, 128)
-
-    # Layer 6
-    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
-    print "Layer 6 %s x %s x %s " % (o_w, o_h, 256)
-
-    # Layer 7
-    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
-    print "Layer 7 %s x %s x %s" % (o_w, o_h, 256)
-
-    # Layer 8
-    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
-    print "Layer 8 %s x %s x %s" % (o_w, o_h, 256)
-
-    # Layer 9
-    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
-    # o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
-    print "Layer 9 %s x %s x %s" % (o_w, o_h, 512)
-
-    # Layer 10
-    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
-    o_w, o_h = M.max_pool_dim(o_w, o_h, 2)
-    print "Layer 10 %s x %s x %s" % (o_w, o_h, 512)
-
-    # Layer 11
-    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
-    print "Layer 11 %s x %s x %s" % (o_w, o_h, 1024)
-
-    # Layer 12
-    o_w, o_h = M.conv_dim(o_w, o_h, p, f, s)
-    pool = o_w
-    o_w, o_h = M.max_pool_dim(o_w, o_h, pool)
-    print "Layer 12 %s x %s x %s" % (o_w, o_h, 1024)
-
-    return o_w, o_h, pool
+    for i in range(num_downs):
+        o_w, o_h = layer_calcuation(o_w, o_h, p, f, s, max_pool=False)
+        o_w, o_h = layer_calcuation(o_w, o_h, p, f, s, max_pool=True)
+            
+    return o_w, o_h
 
 
 class CNN(nn.Module):
@@ -115,60 +66,28 @@ class CNN(nn.Module):
         padding = 1
         stride = 1
 
+        num_downs = int(math.log(constants.input_height)/math.log(2))
         # Since the height is greater than the width in our data we square the data
         width = height = constants.scaled_height
 
-        o_w, o_h, pool = layer_calculations(kernel_size, padding, stride, width, height)
+        o_w, o_h = layer_calculations(kernel_size, padding, stride, width, height, num_downs)
 
         super(CNN, self).__init__()
         # Block 1
         self.layers = nn.ModuleList()
+        
+        in_channels = self.input_channels
+        out_channels = 32
+        for i in range(num_downs):
+            layer = self.default_layer(in_channels, out_channels, max_pool=False)
+            self.layers.append(layer)
+            in_channels = out_channels
+            out_channels = 2 * in_channels
+            layer = self.default_layer(in_channels, out_channels, max_pool=True)
+            self.layers.append(layer)
+            in_channels = out_channels
 
-        layer = self.default_layer(self.input_channels, 32, max_pool=True)
-        self.layers.append(layer)
-
-        layer = self.default_layer(32, 32, max_pool=False)
-        self.layers.append(layer)
-
-        layer = self.default_layer(32, 64, max_pool=True)
-        self.layers.append(layer)
-
-        layer = self.default_layer(64, 128, max_pool=False)
-        self.layers.append(layer)
-
-        layer = self.default_layer(128, 128, max_pool=True)
-        self.layers.append(layer)
-
-        layer = self.default_layer(128, 256, max_pool=True)
-        self.layers.append(layer)
-
-        layer = self.default_layer(256, 256, max_pool=True)
-        self.layers.append(layer)
-
-        layer = self.default_layer(256, 512, max_pool=True)
-        self.layers.append(layer)
-
-        layer = self.default_layer(512, 512, max_pool=False)
-        self.layers.append(layer)
-
-        layer = self.default_layer(512, 512, max_pool=True)
-        self.layers.append(layer)
-
-        layer = self.default_layer(512, 1024, max_pool=False)
-        self.layers.append(layer)
-
-        layer = nn.Sequential(
-            nn.Conv2d(in_channels=1024, out_channels=1024, kernel_size=kernel_size,
-                      stride=stride, padding=padding),
-            nn.BatchNorm2d(1024),
-            nn.ReLU(),
-            nn.MaxPool2d(pool),
-            nn.Dropout(0.2)
-        )
-        self.layers.append(layer)
-
-        # print pool
-        self.fc = nn.Linear(1024 * (o_w) * (o_h), 22)
+        self.fc = nn.Linear(out_channels * (o_w) * (o_h), 22)
         self.apply(weights_init)
 
     def summary(self, x):
