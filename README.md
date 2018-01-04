@@ -4,7 +4,7 @@ A pytorch implementation of posture estimation
 
 Simply run by using: 
 ```
-python train.py
+python train.py --num_epochs 1000
 ```
 
 ## Dataset

@@ -1,6 +1,29 @@
+import torch
 import numpy as np
 import scipy.ndimage as ndi
+import cv2
 
+def normalize_image(image, mean, std):
+    image = (image - mean) / std
+    image[image == np.inf] = 0
+    image[image == -np.inf] = 0
+    image[np.isnan(image)] = 0
+    return image
+        
+def resize(image, size):
+    # image = scipy.misc.imresize(image, self.size)
+    image = cv2.resize(image, None, fx=size, fy=size)
+    return image
+
+def image_to_tensor(image):
+    # swap color axis because
+    # numpy image: H x W x C
+    # torch image: C X H X W
+    
+    image = image.transpose((2, 0, 1))
+    image = torch.from_numpy(image)
+    return image.float()
+        
 def square(image):
     height = image.shape[0]
     width = image.shape[1]

@@ -24,7 +24,7 @@ def load_preview(images, outputs, labels_std,
     for coordinates in output:
         x = coordinates[0]
         y = coordinates[1]
-        circle_size = 3
+        circle_size = 2
         cv2.circle(image, (int(x), int(y)), circle_size, (0, 0, 255), -1)
 
     return image

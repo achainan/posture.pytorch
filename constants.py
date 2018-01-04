@@ -1,6 +1,5 @@
 """While in development instead of args using a constants file"""
 
-num_epochs = 2000
 train_batch_size = 3  # Since we have so little data currently
 val_batch_size = 1  # Since we have so little data currently
 learning_rate = 0.001
@@ -12,7 +11,7 @@ scaled_width = int(scale * default_width)
 scaled_height = int(scale * default_height)
 save_interval = 20
 print_freq = 10
-display_freq = 2  # Save preview to tensorboard ever X epochs
+display_freq = 10  # Save preview to tensorboard ever X epochs
 grayscale = False
 
 

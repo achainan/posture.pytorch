@@ -77,7 +77,8 @@ class CNN(nn.Module):
         self.layers = nn.ModuleList()
         
         in_channels = self.input_channels
-        out_channels = 32
+        out_channels = 1024/(2**(num_downs)) # Ensure output channels of last layer is 1024
+        
         for i in range(num_downs):
             layer = self.default_layer(in_channels, out_channels, max_pool=False)
             self.layers.append(layer)

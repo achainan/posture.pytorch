@@ -199,14 +199,8 @@ class ToTensor(object):
         image, landmarks = np.array(sample['image'], copy=False, dtype=np.float32), np.array(
             sample['landmarks'], copy=True, dtype=np.float32)
 
-        # swap color axis because
-        # numpy image: H x W x C
-        # torch image: C X H X W
-
-        image = image.transpose((2, 0, 1))
-        image = torch.from_numpy(image)
-
-        return image.float(), torch.from_numpy(landmarks).float()
+        image = F.image_to_tensor(image)
+        return image, torch.from_numpy(landmarks).float()
 
 
 class Normalize(object):

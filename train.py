@@ -5,12 +5,19 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 import numpy as np
+import argparse
+
 import models
 import constants
 import preview as P
 from dataset import load_dataset
 from tensorboardX import SummaryWriter
 from third_party import AverageMeter
+
+parser = argparse.ArgumentParser(description='Train the pose estimation model.')
+parser.add_argument('--num_epochs', type=int, default=2000)
+
+args = parser.parse_args()
 
 cuda = torch.cuda.is_available()
 logger = SummaryWriter()
@@ -78,7 +85,7 @@ def main():
 
     assert len(train_loader) != 1, "The train loader length is 1"
 
-    for epoch in range(constants.num_epochs):
+    for epoch in range(args.num_epochs):
         train_error = train(train_loader, cnn, optimizer, criterion, epoch)
 
         val_error = validate(val_loader, cnn, criterion, epoch)
@@ -127,7 +134,7 @@ def validate(loader, model, criterion, epoch):
 
         if i % constants.print_freq == 0:
             print('[VALID] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
-                  % (epoch + 1, constants.num_epochs, losses.val, losses.avg))
+                  % (epoch + 1, args.num_epochs, losses.val, losses.avg))
 
     if epoch % constants.display_freq == 0:
         preview = P.load_preview(
@@ -169,7 +176,7 @@ def train(loader, model, optimizer, criterion, epoch):
 
         if i % constants.print_freq == 0:
             print('[TRAIN] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
-                  % (epoch + 1, constants.num_epochs, losses.val, losses.avg))
+                  % (epoch + 1, args.num_epochs, losses.val, losses.avg))
 
     if epoch % constants.display_freq == 0:
         preview = P.load_preview(
