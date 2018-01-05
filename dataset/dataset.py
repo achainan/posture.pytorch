@@ -12,7 +12,7 @@ from torchvision import transforms
 import constants
 import functional as F
 
-def train_dataset(normalization=None, random=True, grayscale=True):
+def train_dataset(root_dir, normalization=None, random=True, grayscale=True, csv_file='B/train_data.csv'):
     """This function loads the training dataset with the desired transformations."""
 
     transformations = [Scale(constants.scale)]
@@ -33,13 +33,13 @@ def train_dataset(normalization=None, random=True, grayscale=True):
     transform = transforms.Compose(transformations)
 
     train_dataset = PostureLandmarksDataset(
-        csv_file='B/train_data.csv',
-        root_dir='B/',
+        csv_file=csv_file,
+        root_dir=root_dir,
         transform=transform)
     return train_dataset
 
 
-def valid_dataset(normalization=None, grayscale=True):
+def valid_dataset(root_dir, normalization=None, grayscale=True, csv_file='B/validation_data.csv'):
     """This function loads the training dataset with the desired transformations."""
 
     transformations = [Scale(constants.scale)]
@@ -57,19 +57,17 @@ def valid_dataset(normalization=None, grayscale=True):
     transform = transforms.Compose(transformations)
 
     valid_dataset = PostureLandmarksDataset(
-        csv_file='B/validation_data.csv',
-        root_dir='B/',
+        csv_file=csv_file,
+        root_dir=root_dir,
         transform=transform)
     return valid_dataset
 
 
-def load_dataset(images_mean, images_std, labels_mean,
-                 labels_std, grayscale=True):
+def load_dataset(normalization, grayscale=True, root_dir='B/', csv_dir='B/'):
     """This function loads the datasets with the desired transformations."""
 
-    normalization = Normalize(images_mean, images_std, labels_mean, labels_std)
-    train_data = train_dataset(normalization, grayscale=grayscale)
-    valid_data = valid_dataset(normalization, grayscale=grayscale)
+    train_data = train_dataset(root_dir, normalization=normalization, grayscale=grayscale, csv_file=csv_dir+'train_data.csv')
+    valid_data = valid_dataset(root_dir, normalization=normalization, grayscale=grayscale, csv_file=csv_dir+'validation_data.csv')
 
     return {"train": train_data, "valid": valid_data}
 

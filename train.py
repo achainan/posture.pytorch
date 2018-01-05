@@ -10,12 +10,13 @@ import argparse
 import models
 import constants
 import preview as P
-from dataset import load_dataset
+import dataset as d
+from dataset import load_dataset, Normalize
 from tensorboardX import SummaryWriter
 from third_party import AverageMeter
 
 parser = argparse.ArgumentParser(description='Train the pose estimation model.')
-parser.add_argument('--num_epochs', type=int, default=2000)
+parser.add_argument('--num_epochs', type=int, default=4000)
 
 args = parser.parse_args()
 
@@ -29,12 +30,8 @@ images_mean, images_std, labels_mean, labels_std = constants.normalization_value
 def main():
     shuffle = True
 
-    dataset = load_dataset(
-        images_mean,
-        images_std,
-        labels_mean,
-        labels_std,
-        grayscale=constants.grayscale)
+    normalization = Normalize(images_mean, images_std, labels_mean, labels_std)
+    dataset = load_dataset(normalization, grayscale=constants.grayscale)
     train_dataset = dataset["train"]
     val_dataset = dataset["valid"]
 
@@ -84,6 +81,7 @@ def main():
     # Train the Model
 
     assert len(train_loader) != 1, "The train loader length is 1"
+    print "The train loader length is ", len(train_loader)
 
     for epoch in range(args.num_epochs):
         train_error = train(train_loader, cnn, optimizer, criterion, epoch)
@@ -97,7 +95,7 @@ def main():
             save_checkpoint(cnn)
             if val_error < best_val_error or best_val_error is None:
                 best_val_error = val_error
-                save_checkpoint(cnn, 'result/best_checkpoint.pth')
+                save_checkpoint(cnn, 'result/best_checkpoint.pkl')
 
     logger.close()
 
@@ -106,9 +104,9 @@ def main():
     torch.save(cnn, 'result/posture.pth')
 
 
-def save_checkpoint(model, filename='result/cnn_checkpoint.pth'):
+def save_checkpoint(model, filename='result/cnn_checkpoint.pkl'):
     print "saving checkpoint"
-    torch.save(model, filename)
+    torch.save(model.state_dict(), filename)
 
 
 def validate(loader, model, criterion, epoch):

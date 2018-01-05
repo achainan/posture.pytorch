@@ -60,15 +60,16 @@ class CNN(nn.Module):
         return nn.Sequential(*modules)
 
     def __init__(self, input_channels):
-
-        self.input_channels = input_channels
-        kernel_size = 3
-        padding = 1
-        stride = 1
-
-        num_downs = int(math.log(constants.input_height)/math.log(2))
+        
         # Since the height is greater than the width in our data we square the data
         width = height = constants.scaled_height
+                        
+        self.input_channels = input_channels
+        stride = 1
+        kernel_size = width / 2 - 1
+        padding = (stride * (width - 1) + kernel_size - width)/2
+
+        num_downs = int(math.log(constants.input_height)/math.log(2))
 
         o_w, o_h = layer_calculations(kernel_size, padding, stride, width, height, num_downs)
 
