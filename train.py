@@ -10,28 +10,28 @@ import argparse
 import models
 import constants
 import preview as P
-import dataset as d
 from dataset import load_dataset, Normalize
 from tensorboardX import SummaryWriter
 from third_party import AverageMeter
+from normalization import normalization_values
 
 parser = argparse.ArgumentParser(description='Train the pose estimation model.')
 parser.add_argument('--num_epochs', type=int, default=4000)
+parser.add_argument('--csv_dir', type=str, default='B/')
+parser.add_argument('--root_dir', type=str, default='B/')
 
 args = parser.parse_args()
 
 cuda = torch.cuda.is_available()
 logger = SummaryWriter()
 
-images_mean, images_std, labels_mean, labels_std = constants.normalization_values(
-    grayscale=constants.grayscale)
-
+images_mean, images_std, labels_mean, labels_std = normalization_values(grayscale=constants.grayscale, root_dir=args.root_dir, csv_file=args.csv_dir+'train_data.csv')
 
 def main():
     shuffle = True
 
     normalization = Normalize(images_mean, images_std, labels_mean, labels_std)
-    dataset = load_dataset(normalization, grayscale=constants.grayscale)
+    dataset = load_dataset(normalization, grayscale=constants.grayscale, root_dir=args.root_dir, csv_dir=args.csv_dir)
     train_dataset = dataset["train"]
     val_dataset = dataset["valid"]
 
