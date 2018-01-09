@@ -57,13 +57,9 @@ def main():
 
     # We use the random input for testing purposes
     # We square our data hence the shape's width is equal to its height the longer side
-    random_input = torch.randn(
-        1,
-        input_channels,
-        constants.scaled_height,
-        constants.scaled_height)
+    random_input = torch.randn(1, input_channels, int(constants.default_height * scale), int(constants.default_height * scale))
 
-    cnn = models.CNN(input_channels)
+    cnn = models.CNN(input_channels, args.input_height)
     criterion = nn.MSELoss()
     if cuda:
         criterion.cuda()

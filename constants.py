@@ -1,7 +1,7 @@
 """While in development instead of args using a constants file"""
 
-train_batch_size = 3  # Since we have so little data currently
-val_batch_size = 1  # Since we have so little data currently
+train_batch_size = 60  # Since we have so little data currently
+val_batch_size = 12  # Since we have so little data currently
 learning_rate = 0.001
 default_width = 670
 default_height = 760
