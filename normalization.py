@@ -5,8 +5,8 @@ import numpy as np
 
 import dataset
 
-def normalization_values(grayscale=True, flatten=True, root_dir='B/', csv_file='B/train_data.csv'):
-    train_dataset = dataset.train_dataset(root_dir=root_dir, csv_file=csv_file, random=False, grayscale=grayscale)
+def normalization_values(grayscale=True, flatten=True, root_dir='B/', csv_file='B/train_data.csv', scale=1.0):
+    train_dataset = dataset.train_dataset(root_dir=root_dir, csv_file=csv_file, random=False, grayscale=grayscale, scale=scale)
     dataloader = torch.utils.data.DataLoader(dataset=train_dataset,
                                              batch_size=240, # Total number of training samples
                                              shuffle=False,

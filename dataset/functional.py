@@ -3,6 +3,28 @@ import numpy as np
 import scipy.ndimage as ndi
 import cv2
 
+def swap_colors(input, random):
+    output = np.zeros((input.shape), np.float32)
+    
+    red, green, blue = input[:,:,0].copy(), input[:,:,1].copy(), input[:,:,2].copy()
+    
+    prob = 1.0/6.0
+    
+    if random < prob:
+        output[:,:,0], output[:,:,1], output[:,:,2] = red, green, blue
+    elif random < prob*2:
+        output[:,:,0], output[:,:,1], output[:,:,2] = red, blue, green
+    elif random < prob*3:
+        output[:,:,0], output[:,:,1], output[:,:,2] = green, red, blue
+    elif random < prob*4:
+        output[:,:,0], output[:,:,1], output[:,:,2] = green, blue, red
+    elif random < prob*5:
+        output[:,:,0], output[:,:,1], output[:,:,2] = blue, green, red
+    else:
+        output[:,:,0], output[:,:,1], output[:,:,2] = blue, red, green
+
+    return output
+    
 def normalize_image(image, mean, std):
     image = (image - mean) / std
     image[image == np.inf] = 0

@@ -12,13 +12,14 @@ from torchvision import transforms
 import constants
 import functional as F
 
-def train_dataset(root_dir, normalization=None, random=True, grayscale=True, csv_file='B/train_data.csv'):
+def train_dataset(root_dir, normalization=None, random=True, grayscale=True, csv_file='B/train_data.csv', scale=1.0):
     """This function loads the training dataset with the desired transformations."""
 
-    transformations = [Scale(constants.scale)]
+    transformations = [Scale(scale)]
     if random:
         transformations.append(RandomHorizontalFlip())
-        transformations.append(RandomShift(100 * constants.scale))
+        transformations.append(RandomShift(100 * scale))
+        transformations.append(RandomSwapColors())
 
     transformations.append(Square())
 
@@ -39,10 +40,10 @@ def train_dataset(root_dir, normalization=None, random=True, grayscale=True, csv
     return train_dataset
 
 
-def valid_dataset(root_dir, normalization=None, grayscale=True, csv_file='B/validation_data.csv'):
+def valid_dataset(root_dir, normalization=None, grayscale=True, csv_file='B/validation_data.csv', scale=1.0):
     """This function loads the training dataset with the desired transformations."""
 
-    transformations = [Scale(constants.scale)]
+    transformations = [Scale(scale)]
 
     transformations.append(Square())
 
@@ -63,11 +64,11 @@ def valid_dataset(root_dir, normalization=None, grayscale=True, csv_file='B/vali
     return valid_dataset
 
 
-def load_dataset(normalization, grayscale=True, root_dir='B/', csv_dir='B/'):
+def load_dataset(normalization, grayscale=True, root_dir='B/', csv_dir='B/', scale=1.0):
     """This function loads the datasets with the desired transformations."""
 
-    train_data = train_dataset(root_dir, normalization=normalization, grayscale=grayscale, csv_file=csv_dir+'train_data.csv')
-    valid_data = valid_dataset(root_dir, normalization=normalization, grayscale=grayscale, csv_file=csv_dir+'validation_data.csv')
+    train_data = train_dataset(root_dir, normalization=normalization, grayscale=grayscale, csv_file=csv_dir+'train_data.csv', scale=scale)
+    valid_data = valid_dataset(root_dir, normalization=normalization, grayscale=grayscale, csv_file=csv_dir+'validation_data.csv', scale=scale)
 
     return {"train": train_data, "valid": valid_data}
 
@@ -220,6 +221,17 @@ class Normalize(object):
 
         return {'image': image, 'landmarks': landmarks}
 
+class RandomSwapColors(object):
+    """Random swap colors of the image in a sample.
+    """
+    def __call__(self, sample):
+        image = np.array(sample['image'], copy=True, dtype=np.float32)
+        landmarks = np.array(sample['landmarks'], copy=True, dtype=np.float32)
+
+        rand = np.random.uniform(0, 1)
+        image = F.swap_colors(image, rand)
+
+        return {'image': image, 'landmarks': landmarks}
 
 class RandomRotation(object):
     """Rotate the image by a random angle."""

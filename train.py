@@ -16,22 +16,25 @@ from third_party import AverageMeter
 from normalization import normalization_values
 
 parser = argparse.ArgumentParser(description='Train the pose estimation model.')
-parser.add_argument('--num_epochs', type=int, default=4000)
+parser.add_argument('--num_epochs', type=int, default=3000)
 parser.add_argument('--csv_dir', type=str, default='B/')
 parser.add_argument('--root_dir', type=str, default='B/')
+parser.add_argument('--input_height', type=int, default=32)
 
 args = parser.parse_args()
 
 cuda = torch.cuda.is_available()
 logger = SummaryWriter()
 
-images_mean, images_std, labels_mean, labels_std = normalization_values(grayscale=constants.grayscale, root_dir=args.root_dir, csv_file=args.csv_dir+'train_data.csv')
+scale = args.input_height/760.0
+
+images_mean, images_std, labels_mean, labels_std = normalization_values(grayscale=constants.grayscale, root_dir=args.root_dir, csv_file=args.csv_dir+'train_data.csv', scale=scale)
 
 def main():
     shuffle = True
 
     normalization = Normalize(images_mean, images_std, labels_mean, labels_std)
-    dataset = load_dataset(normalization, grayscale=constants.grayscale, root_dir=args.root_dir, csv_dir=args.csv_dir)
+    dataset = load_dataset(normalization, grayscale=constants.grayscale, root_dir=args.root_dir, csv_dir=args.csv_dir, scale=scale)
     train_dataset = dataset["train"]
     val_dataset = dataset["valid"]
 
@@ -89,7 +92,7 @@ def main():
         val_error = validate(val_loader, cnn, criterion, epoch)
 
         scalars = {"test": val_error, "train": train_error}
-        logger.add_scalars('Loss', scalars, epoch)
+        logger.add_scalars('Posture/Loss', scalars, epoch)
 
         if (epoch + 1) % constants.save_interval == 0:
             save_checkpoint(cnn)
@@ -128,7 +131,7 @@ def validate(loader, model, criterion, epoch):
         losses.update(loss.data[0], images.size(0))
 
         niter = epoch * len(loader) + i
-        logger.add_scalar('Val/Loss', loss.data[0], niter)
+        logger.add_scalar('Posture/Val/Loss', loss.data[0], niter)
 
         if i % constants.print_freq == 0:
             print('[VALID] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
@@ -142,7 +145,7 @@ def validate(loader, model, criterion, epoch):
             labels_mean,
             images_std,
             images_mean)
-        logger.add_image('Val/Output', preview, i + 1)
+        logger.add_image('Posture/Val/Output', preview, i + 1)
 
     return losses.avg
 
@@ -170,7 +173,7 @@ def train(loader, model, optimizer, criterion, epoch):
         optimizer.step()
 
         niter = epoch * len(loader) + i
-        logger.add_scalar('Train/Loss', loss.data[0], niter)
+        logger.add_scalar('Posture/Train/Loss', loss.data[0], niter)
 
         if i % constants.print_freq == 0:
             print('[TRAIN] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
@@ -184,7 +187,7 @@ def train(loader, model, optimizer, criterion, epoch):
             labels_mean,
             images_std,
             images_mean)
-        logger.add_image('Train/Output', preview, i + 1)
+        logger.add_image('Posture/Train/Output', preview, i + 1)
         target = P.load_preview(
             images,
             labels,
@@ -192,7 +195,7 @@ def train(loader, model, optimizer, criterion, epoch):
             labels_mean,
             images_std,
             images_mean)
-        logger.add_image('Train/Target', target, i + 1)
+        logger.add_image('Posture/Train/Target', target, i + 1)
 
     return losses.avg
 

@@ -27,8 +27,6 @@ def layer_calcuation(o_w, o_h, p, f, s, max_pool=True):
 
 def layer_calculations(f, p, s, w, h, num_downs):
     """This function calculates the required values for the model"""
-    print "Input %s x %s x 1 " % (w, h)
-
     o_w, o_h = w, h
     for i in range(num_downs):
         o_w, o_h = layer_calcuation(o_w, o_h, p, f, s, max_pool=False)
