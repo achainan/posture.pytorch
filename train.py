@@ -138,9 +138,11 @@ def validate(loader, model, criterion, epoch):
                   % (epoch + 1, args.num_epochs, losses.val, losses.avg))
 
     if epoch % constants.display_freq == 0:
+        output = outputs.data[0].cpu().numpy()
+        output = output.reshape(-1, 2)
         preview = P.load_preview(
             images,
-            outputs,
+            output,
             labels_std,
             labels_mean,
             images_std,
@@ -180,21 +182,28 @@ def train(loader, model, optimizer, criterion, epoch):
                   % (epoch + 1, args.num_epochs, losses.val, losses.avg))
 
     if epoch % constants.display_freq == 0:
+        output = outputs.data[0].cpu().numpy()
+        output = output.reshape(-1, 2)
         preview = P.load_preview(
             images,
-            outputs,
+            output,
             labels_std,
             labels_mean,
             images_std,
-            images_mean)
+            images_mean, 
+            scale)
         logger.add_image('Posture/Train/Output', preview, i + 1)
+
+        label = labels.data[0].cpu().numpy()
+        label = label.reshape(-1, 2)
         target = P.load_preview(
             images,
-            labels,
+            label,
             labels_std,
             labels_mean,
             images_std,
-            images_mean)
+            images_mean,
+            scale)
         logger.add_image('Posture/Train/Target', target, i + 1)
 
     return losses.avg

@@ -2,7 +2,6 @@
 
 import torch
 import torch.nn as nn
-import constants
 import calculations as M
 import math
 
@@ -57,17 +56,17 @@ class CNN(nn.Module):
 
         return nn.Sequential(*modules)
 
-    def __init__(self, input_channels):
+    def __init__(self, input_channels, input_height):
         
         # Since the height is greater than the width in our data we square the data
-        width = height = constants.scaled_height
+        width = height = input_height
                         
         self.input_channels = input_channels
         stride = 1
         kernel_size = width / 2 - 1
         padding = (stride * (width - 1) + kernel_size - width)/2
 
-        num_downs = int(math.log(constants.input_height)/math.log(2))
+        num_downs = int(math.log(input_height)/math.log(2))
 
         o_w, o_h = layer_calculations(kernel_size, padding, stride, width, height, num_downs)
 
