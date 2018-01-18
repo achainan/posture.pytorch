@@ -180,26 +180,12 @@ def train(loader, model, optimizer, criterion, epoch):
     if epoch % constants.display_freq == 0:
         output = outputs.data[0].cpu().numpy()
         output = output.reshape(-1, 2)
-        preview = P.load_preview(
-            images,
-            output,
-            labels_std,
-            labels_mean,
-            images_std,
-            images_mean, 
-            scale)
+        preview = P.load_preview(images, output, labels_std, labels_mean, images_std, images_mean,  1)
         logger.add_image('Posture/Train/Output', preview, i + 1)
 
         label = labels.data[0].cpu().numpy()
         label = label.reshape(-1, 2)
-        target = P.load_preview(
-            images,
-            label,
-            labels_std,
-            labels_mean,
-            images_std,
-            images_mean,
-            scale)
+        target = P.load_preview(images, label, labels_std, labels_mean, images_std, images_mean, 1)
         logger.add_image('Posture/Train/Target', target, i + 1)
 
     return losses.avg
