@@ -6,9 +6,12 @@ import numpy as np
 import dataset
 
 def normalization_values(grayscale=True, flatten=True, root_dir='B/', csv_file='B/train_data.csv', scale=1.0):
+    batch_size = sum(1 for line in open(csv_file))
+    batch_size = batch_size - 1
+    
     train_dataset = dataset.train_dataset(root_dir=root_dir, csv_file=csv_file, random=False, grayscale=grayscale, scale=scale)
     dataloader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                             batch_size=240, # Total number of training samples
+                                             batch_size=batch_size, # Total number of training samples
                                              shuffle=False,
                                              drop_last=True)
 

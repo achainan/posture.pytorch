@@ -42,14 +42,12 @@ def main():
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=constants.train_batch_size,
                                                shuffle=shuffle,
-                                               pin_memory=cuda,
-                                               drop_last=True)
+                                               pin_memory=cuda)
 
     val_loader = torch.utils.data.DataLoader(dataset=val_dataset,
                                              batch_size=constants.val_batch_size,
                                              shuffle=shuffle,
-                                             pin_memory=cuda,
-                                             drop_last=True)
+                                             pin_memory=cuda)
 
     input_channels = 3
     if constants.grayscale:
