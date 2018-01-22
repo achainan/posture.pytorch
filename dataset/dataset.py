@@ -17,7 +17,6 @@ def train_dataset(root_dir, normalization=None, random=True, grayscale=True, csv
 
     transformations = [Scale(scale)]
     if random:
-        transformations.append(RandomHorizontalFlip())
         transformations.append(RandomShift(100 * scale))
         transformations.append(RandomSwapColors())
 
@@ -145,35 +144,6 @@ class RandomShift(object):
         
         landmarks[:, 0] -= tx
         landmarks[:, 1] -= ty
-
-        return {'image': image, 'landmarks': landmarks}
-
-
-class RandomHorizontalFlip(object):
-    """Flip horizontally the image in a sample."""
-
-    def __call__(self, sample):
-        image, landmarks = np.array(sample['image'], copy=True, dtype=np.float32), np.array(
-            sample['landmarks'], copy=True, dtype=np.float32)
-        # image, landmarks = sample['image'], sample['landmarks']
-
-        rand = np.random.uniform(0, 1)
-        if rand > 0.5:
-            _, w = image.shape[:2]
-
-            axis = 1
-            image = np.asarray(image).swapaxes(axis, 0)
-            image = image[::-1, ...]
-            image = image.swapaxes(0, axis)
-
-            landmarks[1], landmarks[0] = landmarks[0], landmarks[1].copy()
-            landmarks[3], landmarks[2] = landmarks[2], landmarks[3].copy()
-            landmarks[5], landmarks[4] = landmarks[4], landmarks[5].copy()
-            landmarks[7], landmarks[6] = landmarks[6], landmarks[7].copy()
-            landmarks[9], landmarks[8] = landmarks[8], landmarks[9].copy()
-
-            landmarks[:, 0] *= -1
-            landmarks = landmarks + [w, 0]
 
         return {'image': image, 'landmarks': landmarks}
 
