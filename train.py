@@ -20,6 +20,7 @@ parser.add_argument('--num_epochs', type=int, default=3000)
 parser.add_argument('--csv_dir', type=str, default='B/')
 parser.add_argument('--root_dir', type=str, default='B/')
 parser.add_argument('--input_height', type=int, default=64)
+parser.add_argument('--model_name', type=str, default='posture')
 
 args = parser.parse_args()
 
@@ -37,6 +38,10 @@ def main():
     dataset = load_dataset(normalization, grayscale=constants.grayscale, root_dir=args.root_dir, csv_dir=args.csv_dir, scale=scale)
     train_dataset = dataset["train"]
     val_dataset = dataset["valid"]
+
+    dataset_sample = train_dataset[0]
+    label_sample = dataset_sample[1]
+    out_features = torch.numel(label_sample)
 
     # Data Loader (Input Pipeline)
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
@@ -57,7 +62,7 @@ def main():
     # We square our data hence the shape's width is equal to its height the longer side
     random_input = torch.randn(1, input_channels, int(constants.default_height * scale), int(constants.default_height * scale))
 
-    cnn = models.Posture(input_channels, args.input_height, 22)
+    cnn = models.Posture(input_channels, args.input_height, out_features)
     criterion = nn.MSELoss()
     if cuda:
         criterion.cuda()
@@ -89,22 +94,21 @@ def main():
         logger.add_scalars('Posture/Loss', scalars, epoch)
 
         if (epoch + 1) % constants.save_interval == 0:
-            save_checkpoint(cnn)
+            save_model(cnn, 'checkpoint')
             if val_error < best_val_error or best_val_error is None:
                 best_val_error = val_error
-                save_checkpoint(cnn, 'result/best_checkpoint.pkl')
-
+                save_model(cnn, 'best_checkpoint')
+                
     logger.close()
 
     # Save the Trained Model
-    torch.save(cnn.state_dict(), 'result/posture.pkl')
-    torch.save(cnn, 'result/posture.pth')
+    save_model(cnn, "final")
+    torch.save(cnn, 'result/final.pth')
 
-
-def save_checkpoint(model, filename='result/cnn_checkpoint.pkl'):
-    print "saving checkpoint"
-    torch.save(model.state_dict(), filename)
-
+def save_model(model, filename):
+    filepath = "result/" + args.model_name + "_" + filename + ".pkl"
+    print "saving " + filepath
+    torch.save(model.state_dict(), filepath)
 
 def validate(loader, model, criterion, epoch):
     model.eval()
