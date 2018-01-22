@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(description='Train the pose estimation model.')
 parser.add_argument('--num_epochs', type=int, default=3000)
 parser.add_argument('--csv_dir', type=str, default='B/')
 parser.add_argument('--root_dir', type=str, default='B/')
-parser.add_argument('--input_height', type=int, default=32)
+parser.add_argument('--input_height', type=int, default=64)
 
 args = parser.parse_args()
 
@@ -57,7 +57,7 @@ def main():
     # We square our data hence the shape's width is equal to its height the longer side
     random_input = torch.randn(1, input_channels, int(constants.default_height * scale), int(constants.default_height * scale))
 
-    cnn = models.CNN(input_channels, args.input_height)
+    cnn = models.Posture(input_channels, args.input_height, 22)
     criterion = nn.MSELoss()
     if cuda:
         criterion.cuda()
@@ -134,13 +134,7 @@ def validate(loader, model, criterion, epoch):
     if epoch % constants.display_freq == 0:
         output = outputs.data[0].cpu().numpy()
         output = output.reshape(-1, 2)
-        preview = P.load_preview(
-            images,
-            output,
-            labels_std,
-            labels_mean,
-            images_std,
-            images_mean)
+        preview = P.load_preview(images, output, labels_std, labels_mean, images_std, images_mean, 1)
         logger.add_image('Posture/Val/Output', preview, i + 1)
 
     return losses.avg

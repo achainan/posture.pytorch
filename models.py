@@ -34,8 +34,8 @@ def layer_calculations(f, p, s, w, h, num_downs):
     return o_w, o_h
 
 
-class CNN(nn.Module):
-    """This class defines the CNN Model."""
+class Posture(nn.Module):
+    """This class defines the Posture Model."""
 
     def default_layer(self, in_channels, out_channels,
                       max_pool=True, kernel_size=3, stride=1, padding=1, dropout=0.2):
@@ -56,7 +56,7 @@ class CNN(nn.Module):
 
         return nn.Sequential(*modules)
 
-    def __init__(self, input_channels, input_height):
+    def __init__(self, input_channels, input_height, out_features):
         
         # Since the height is greater than the width in our data we square the data
         width = height = input_height
@@ -70,7 +70,7 @@ class CNN(nn.Module):
 
         o_w, o_h = layer_calculations(kernel_size, padding, stride, width, height, num_downs)
 
-        super(CNN, self).__init__()
+        super(Posture, self).__init__()
         # Block 1
         self.layers = nn.ModuleList()
         
@@ -86,7 +86,7 @@ class CNN(nn.Module):
             self.layers.append(layer)
             in_channels = out_channels
 
-        self.fc = nn.Linear(out_channels * (o_w) * (o_h), 22)
+        self.fc = nn.Linear(out_channels * (o_w) * (o_h), out_features)
         self.apply(weights_init)
 
     def summary(self, x):
