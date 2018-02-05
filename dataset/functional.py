@@ -3,6 +3,16 @@ import numpy as np
 import scipy.ndimage as ndi
 import cv2
 
+def full(img, shape):
+    img = np.array(img, copy=True, dtype=np.float32)
+    result = np.full(shape, 255, np.float32)
+    w = img.shape[1]
+    h = img.shape[0]
+    x = (shape[1] - w) / 2
+    y = (shape[0] - h) / 2
+    result[y:y+h, x:w+x] = img
+    return result
+        
 def swap_colors(input, random):
     output = np.zeros((input.shape), np.float32)
     
@@ -32,18 +42,10 @@ def normalize_image(image, mean, std):
     image[np.isnan(image)] = 0
     return image
         
-def resize(image, size):
+def deprecated_resize(image, size):
     # image = scipy.misc.imresize(image, self.size)
     image = cv2.resize(image, None, fx=size, fy=size)
     return image
-
-def image_to_tensor(image):
-    # swap color axis because
-    # numpy image: H x W x C
-    # torch image: C X H X W    
-    image = image.transpose((2, 0, 1))
-    image = torch.from_numpy(image)
-    return image.float()
         
 def square(image):
     height = image.shape[0]
@@ -51,7 +53,9 @@ def square(image):
     x = 0
     y = 0
     shape = (height, width, 3)
-    if width > height:
+    if height == width:
+        return image, x, y 
+    elif width > height:
         y = (height - width)/2
         shape = (width, width, 3)
     elif height > width:
