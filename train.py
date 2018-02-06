@@ -171,9 +171,6 @@ def validate(loader, model, criterion, epoch):
         output = outputs.data[0].cpu().numpy()
         label = labels.data[0].cpu().numpy()
         
-        print output.shape
-        print labels_std.shape
-        
         output = output * labels_std + labels_mean
         label = label * labels_std + labels_mean
         print "FAKE: ", output.astype(int).tolist()

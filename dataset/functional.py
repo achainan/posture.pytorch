@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import scipy.ndimage as ndi
 import cv2
+from torch.autograd import Variable
     
 def denormalize_image_tensor(tensor_mean, tensor_std, images): 
     tensor_std = Variable(tensor_std.float().squeeze().cuda(async=True))
