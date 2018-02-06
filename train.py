@@ -10,32 +10,66 @@ import argparse
 import models
 import constants
 import preview as P
+from dataset import functional as F
 from dataset import load_dataset, Normalize
 from tensorboardX import SummaryWriter
 from third_party import AverageMeter
 from normalization import normalization_values
 
 parser = argparse.ArgumentParser(description='Train the pose estimation model.')
-parser.add_argument('--num_epochs', type=int, default=3000)
+parser.add_argument('--num_epochs', type=int, default=8000)
 parser.add_argument('--csv_dir', type=str, default='B/')
 parser.add_argument('--root_dir', type=str, default='B/')
-parser.add_argument('--input_height', type=int, default=64)
+parser.add_argument('--input_height', type=int, default=128)
 parser.add_argument('--model_name', type=str, default='posture')
+parser.add_argument('--display_freq', type=int, default=20, help="Save preview to tensorboard ever X epochs")
+parser.add_argument('--train_batch_size', type=int, default=120)
+parser.add_argument('--val_batch_size', type=int, default=12)
+
+display_parser = parser.add_mutually_exclusive_group(required=False)
+display_parser.add_argument('--display', dest='display', action='store_true')
+display_parser.add_argument('--no-display', dest='display', action='store_false')
+parser.set_defaults(display=True)
+
+normalize_parser = parser.add_mutually_exclusive_group(required=False)
+normalize_parser.add_argument('--normalize', dest='normalize', action='store_true')
+normalize_parser.add_argument('--no-normalization', dest='normalize', action='store_false')
+parser.set_defaults(normalize=True)
+
+cache_parser = parser.add_mutually_exclusive_group(required=False)
+cache_parser.add_argument('--cached', dest='cached', action='store_true')
+cache_parser.add_argument('--no-cached', dest='cached', action='store_false')
+parser.set_defaults(cached=False)
 
 args = parser.parse_args()
 
 cuda = torch.cuda.is_available()
 logger = SummaryWriter()
 
-scale = args.input_height/760.0
+input_height = args.input_height
+# Calculate scale
+scale = args.input_height/constants.default_width
 
-images_mean, images_std, labels_mean, labels_std = normalization_values(grayscale=constants.grayscale, root_dir=args.root_dir, csv_file=args.csv_dir+'train_data.csv', scale=scale)
+# Backout input width
+input_width = int(round(constants.default_width * scale))
+input_height = int(round(constants.default_height * scale))
+
+csv_file = args.csv_dir+'train_data.csv'
+
+images_mean, images_std, labels_mean, labels_std = 0.0, 1.0, 0.0, 1.0
+
+print scale
+if args.normalize:
+    images_mean, images_std, labels_mean, labels_std = normalization_values(root_dir=args.root_dir, csv_file=csv_file, scale=scale, cache=args.cached)
+
+# print images_mean, images_std, labels_mean, labels_std
+np.set_printoptions(suppress=True)
 
 def main():
     shuffle = True
 
     normalization = Normalize(images_mean, images_std, labels_mean, labels_std)
-    dataset = load_dataset(normalization, grayscale=constants.grayscale, root_dir=args.root_dir, csv_dir=args.csv_dir, scale=scale)
+    dataset = load_dataset(normalization, root_dir=args.root_dir, csv_dir=args.csv_dir, scale=scale, random=False)
     train_dataset = dataset["train"]
     val_dataset = dataset["valid"]
 
@@ -45,29 +79,27 @@ def main():
 
     # Data Loader (Input Pipeline)
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                               batch_size=constants.train_batch_size,
+                                               batch_size=args.train_batch_size,
                                                shuffle=shuffle,
                                                pin_memory=cuda)
 
     val_loader = torch.utils.data.DataLoader(dataset=val_dataset,
-                                             batch_size=constants.val_batch_size,
+                                             batch_size=args.val_batch_size,
                                              shuffle=shuffle,
                                              pin_memory=cuda)
 
     input_channels = 3
-    if constants.grayscale:
-        input_channels = 1
 
     # We use the random input for testing purposes
     # We square our data hence the shape's width is equal to its height the longer side
-    random_input = torch.randn(1, input_channels, int(constants.default_height * scale), int(constants.default_height * scale))
+    random_input = torch.randn(2, input_channels, input_width, input_height)
 
-    cnn = models.Posture(input_channels, args.input_height, out_features)
+    cnn = models.Posture(input_channels, input_width, input_height, out_features)
     criterion = nn.MSELoss()
     if cuda:
         criterion.cuda()
         cnn.cuda()
-        random_input = random_input.cuda()
+        random_input = random_input.cuda(async=True)
 
     random_input = Variable(random_input, requires_grad=False)
 
@@ -91,7 +123,7 @@ def main():
         val_error = validate(val_loader, cnn, criterion, epoch)
 
         scalars = {"test": val_error, "train": train_error}
-        logger.add_scalars('Posture/Loss', scalars, epoch)
+        logger.add_scalars(args.model_name + '/Loss', scalars, epoch)
 
         if (epoch + 1) % constants.save_interval == 0:
             save_model(cnn, 'checkpoint')
@@ -106,7 +138,7 @@ def main():
     torch.save(cnn, 'result/final.pth')
 
 def save_model(model, filename):
-    filepath = "result/" + args.model_name + "_" + filename + ".pkl"
+    filepath = "result/" + args.model_name + "_" + filename + "_" + str(args.input_height) + ".pkl"
     print "saving " + filepath
     torch.save(model.state_dict(), filepath)
 
@@ -118,8 +150,8 @@ def validate(loader, model, criterion, epoch):
         images = Variable(val_images)
         labels = Variable(val_labels)
         if cuda:
-            images = images.cuda()
-            labels = labels.cuda()
+            images = images.cuda(async=True)
+            labels = labels.cuda(async=True)
 
         # compute output
         outputs = model(images)
@@ -129,17 +161,32 @@ def validate(loader, model, criterion, epoch):
         losses.update(loss.data[0], images.size(0))
 
         niter = epoch * len(loader) + i
-        logger.add_scalar('Posture/Val/Loss', loss.data[0], niter)
+        logger.add_scalar(args.model_name + '/Val/Loss', loss.data[0], niter)
 
         if i % constants.print_freq == 0:
             print('[VALID] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
                   % (epoch + 1, args.num_epochs, losses.val, losses.avg))
 
-    if epoch % constants.display_freq == 0:
+    if args.display and epoch % args.display_freq == 0:
         output = outputs.data[0].cpu().numpy()
+        label = labels.data[0].cpu().numpy()
+        
+        print output.shape
+        print labels_std.shape
+        
+        output = output * labels_std + labels_mean
+        label = label * labels_std + labels_mean
+        print "FAKE: ", output.astype(int).tolist()
+        print "REAL: ", label.astype(int).tolist()
+                
         output = output.reshape(-1, 2)
-        preview = P.load_preview(images, output, labels_std, labels_mean, images_std, images_mean, 1)
-        logger.add_image('Posture/Val/Output', preview, i + 1)
+        images = F.denormalize_image_tensor(torch.from_numpy(images_mean), torch.from_numpy(images_std), images)
+        image = images.data[0].cpu().numpy()
+        image = np.rollaxis(image, 0, 3)
+        
+        output *= scale
+        preview = P.load_preview(image, output, 1)
+        logger.add_image(args.model_name + '/Val/Output', preview, i + 1)
 
     return losses.avg
 
@@ -152,8 +199,8 @@ def train(loader, model, optimizer, criterion, epoch):
         images = Variable(train_images)
         labels = Variable(train_labels)
         if cuda:
-            images = images.cuda()
-            labels = labels.cuda()
+            images = images.cuda(async=True)
+            labels = labels.cuda(async=True)
 
         # Forward + Backward + Optimize
         optimizer.zero_grad()
@@ -167,22 +214,32 @@ def train(loader, model, optimizer, criterion, epoch):
         optimizer.step()
 
         niter = epoch * len(loader) + i
-        logger.add_scalar('Posture/Train/Loss', loss.data[0], niter)
+        logger.add_scalar(args.model_name + '/Train/Loss', loss.data[0], niter)
 
         if i % constants.print_freq == 0:
             print('[TRAIN] - EPOCH %d/ %d - BATCH LOSS: %.8f/ %.8f(avg) '
                   % (epoch + 1, args.num_epochs, losses.val, losses.avg))
 
-    if epoch % constants.display_freq == 0:
-        output = outputs.data[0].cpu().numpy()
-        output = output.reshape(-1, 2)
-        preview = P.load_preview(images, output, labels_std, labels_mean, images_std, images_mean,  1)
-        logger.add_image('Posture/Train/Output', preview, i + 1)
+    if args.display and epoch % args.display_freq == 0:             
+        images = F.denormalize_image_tensor(torch.from_numpy(images_mean), torch.from_numpy(images_std), images)
+        image = images.data[0].cpu().numpy()
+        image = np.rollaxis(image, 0, 3)
 
-        label = labels.data[0].cpu().numpy()
+        outputs = outputs.cpu() * Variable(torch.from_numpy(labels_std)) + Variable(torch.from_numpy(labels_mean))
+        output = outputs.data[0].numpy()
+        output = output.reshape(-1, 2)
+                
+        output *= scale
+        preview = P.load_preview(image, output,  1)
+        logger.add_image(args.model_name + '/Train/Output', preview, i + 1)
+
+        labels = labels.cpu() * Variable(torch.from_numpy(labels_std)) + Variable(torch.from_numpy(labels_mean))
+        label = labels.data[0].numpy()
         label = label.reshape(-1, 2)
-        target = P.load_preview(images, label, labels_std, labels_mean, images_std, images_mean, 1)
-        logger.add_image('Posture/Train/Target', target, i + 1)
+                
+        label *= scale        
+        target = P.load_preview(image, label, 1)
+        logger.add_image(args.model_name + '/Train/Target', target, i + 1)
 
     return losses.avg
 

@@ -2,6 +2,14 @@ import torch
 import numpy as np
 import scipy.ndimage as ndi
 import cv2
+    
+def denormalize_image_tensor(tensor_mean, tensor_std, images): 
+    tensor_std = Variable(tensor_std.float().squeeze().cuda(async=True))
+    tensor_mean = Variable(tensor_mean.float().squeeze().cuda(async=True))        
+    images = images.permute(0, 2, 3, 1)
+    images = images * tensor_std + tensor_mean
+    images = images.permute(0, 3, 1, 2)        
+    return images
 
 def full(img, shape):
     img = np.array(img, copy=True, dtype=np.float32)

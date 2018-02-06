@@ -33,12 +33,10 @@ def layer_calculations(f, p, s, w, h, num_downs):
             
     return o_w, o_h
 
-
 class Posture(nn.Module):
     """This class defines the Posture Model."""
 
-    def default_layer(self, in_channels, out_channels,
-                      max_pool=True, kernel_size=3, stride=1, padding=1, dropout=0.2):
+    def default_layer(self, in_channels, out_channels, max_pool=True, kernel_size=3, stride=1, padding=1, dropout=0.2):
         conv = nn.Conv2d(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -56,36 +54,37 @@ class Posture(nn.Module):
 
         return nn.Sequential(*modules)
 
-    def __init__(self, input_channels, input_height, out_features):
-        
+    def __init__(self, input_channels, width, height, out_features):
+        super(Posture, self).__init__()
+
         # Since the height is greater than the width in our data we square the data
-        width = height = input_height
                         
         self.input_channels = input_channels
         stride = 1
         kernel_size = width / 2 - 1
         padding = (stride * (width - 1) + kernel_size - width)/2
 
-        num_downs = int(math.log(input_height)/math.log(2))
-
+        num_downs = int(math.log(height)/math.log(2))
+        num_downs = num_downs - 3
         o_w, o_h = layer_calculations(kernel_size, padding, stride, width, height, num_downs)
 
-        super(Posture, self).__init__()
         # Block 1
         self.layers = nn.ModuleList()
         
+        out_channels = self.input_channels
         in_channels = self.input_channels
-        out_channels = 1024/(2**(num_downs)) # Ensure output channels of last layer is 1024
-        
-        for i in range(num_downs):
-            layer = self.default_layer(in_channels, out_channels, max_pool=False)
-            self.layers.append(layer)
-            in_channels = out_channels
-            out_channels = 2 * in_channels
-            layer = self.default_layer(in_channels, out_channels, max_pool=True)
-            self.layers.append(layer)
-            in_channels = out_channels
+        if num_downs > 0:
+            out_channels = height/8 # Number of filters scales with image size        
+            for i in range(num_downs):
+                layer = self.default_layer(in_channels, out_channels, max_pool=False)
+                self.layers.append(layer)
+                in_channels = out_channels
+                out_channels = 2 * in_channels
+                layer = self.default_layer(in_channels, out_channels, max_pool=True)
+                self.layers.append(layer)
+                in_channels = out_channels
 
+        self.seq = nn.Sequential(*self.layers)
         self.fc = nn.Linear(out_channels * (o_w) * (o_h), out_features)
         self.apply(weights_init)
 
@@ -98,12 +97,12 @@ class Posture(nn.Module):
 
         out = x.view(x.size(0), -1)
         out = self.fc(out)
+        out = torch.unsqueeze(out, 0)
         return out
 
     def forward(self, x):
-        for i, l in enumerate(self.layers):
-            x = l(x)
-
+        x = self.seq(x)
         out = x.view(x.size(0), -1)
         out = self.fc(out)
+        out = torch.unsqueeze(out, -1)
         return out
