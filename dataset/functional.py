@@ -3,10 +3,16 @@ import numpy as np
 import scipy.ndimage as ndi
 import cv2
 from torch.autograd import Variable
-    
-def denormalize_image_tensor(tensor_mean, tensor_std, images): 
-    tensor_std = Variable(tensor_std.float().squeeze().cuda(async=True))
-    tensor_mean = Variable(tensor_mean.float().squeeze().cuda(async=True))        
+import random
+import math
+from PIL import Image
+  
+def denormalize_image_tensor(tensor_mean, tensor_std, images, cuda): 
+    tensor_std = Variable(tensor_std.float().squeeze())
+    tensor_mean = Variable(tensor_mean.float().squeeze())
+    if cuda:
+        tensor_std = tensor_std.cuda()
+        tensor_mean = tensor_mean.cuda()           
     images = images.permute(0, 2, 3, 1)
     images = images * tensor_std + tensor_mean
     images = images.permute(0, 3, 1, 2)        
@@ -76,20 +82,39 @@ def square(image):
 
     return square, x, y
     
-def shift(image, offset):
-    channel_axis = 2
-    cval = 0.
-    tx = np.random.randint(-1 * offset, high=offset)
-    ty = 0  # Currently only horizontal shift
-    translation_matrix = np.array([[1, 0, ty],
-                                   [0, 1, tx],
-                                   [0, 0, 1]])
+# def shift(image, offset):
+#     channel_axis = 2
+#     cval = 0.
+#     tx = random.randint(int(-1 * offset), int(offset))
+#     ty = 0  # Currently only horizontal shift
+#     translation_matrix = np.array([[1, 0, ty],
+#                                    [0, 1, tx],
+#                                    [0, 0, 1]])
+#
+#     transform_matrix = translation_matrix  # no need to do offset
+#     image = apply_transform(image, transform_matrix, channel_axis, 'nearest', cval)
+#     return image, tx, ty
 
-    transform_matrix = translation_matrix  # no need to do offset
-    image = apply_transform(image, transform_matrix,
-                            channel_axis, 'nearest', cval)
-    return image, tx, ty
+def shift(image, offset):
+    tx = random.randint(int(-1 * offset), int(offset))
+    ty = 0  # Currently only horizontal shift
     
+    new_center = (-tx, -ty)
+    center = (0,0)
+    nx,ny = x,y = center
+    (nx,ny) = new_center
+    cosine = 1.0
+    sine = 0.0
+    a = cosine
+    b = sine
+    c = x-nx*a-ny*b
+    d = -sine
+    e = cosine
+    f = y-nx*d-ny*e
+    image = image.transform(image.size, Image.AFFINE, (a,b,c,d,e,f), resample=Image.BICUBIC)
+            
+    return image, tx, ty
+        
 # Taken from keras:
 # https://github.com/keras-team/keras/blob/master/keras/preprocessing/image.py
 

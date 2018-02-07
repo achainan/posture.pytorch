@@ -10,19 +10,23 @@ import scipy.ndimage as ndi
 import torchvision
 from torchvision import transforms
 import constants
-from transforms import Scale, RandomShift, BlackAndWhite, ToTensor, Square, Normalize
+from transforms import RandomShift, BlackAndWhite, ToTensor, Square, Normalize, Resize, RandomSwapColors
 
 def train_dataset(root_dir, normalization=None, random=True, grayscale=False, square=False, csv_file='B/train_data.csv', scale=1.0):
     """This function loads the training dataset with the desired transformations."""
 
-    transformations = []
-    if scale != 1.0:
-        transformations.append(Scale(scale))
-    
-    if random:
-        transformations.append(RandomShift(100 * scale))
-        # transformations.append(RandomSwapColors())
+    scaled_width = int(round(scale * constants.default_width))
 
+    transformations = []
+    if random:
+        transformations.append(RandomShift(100))
+    
+    if scale != 1.0:
+        transformations.append(Resize(scaled_width))
+
+    if random:
+        transformations.append(RandomSwapColors())
+    
     if square:
         transformations.append(Square())
 
@@ -46,9 +50,11 @@ def train_dataset(root_dir, normalization=None, random=True, grayscale=False, sq
 def valid_dataset(root_dir, normalization=None, grayscale=False, square=False, csv_file='B/validation_data.csv', scale=1.0):
     """This function loads the training dataset with the desired transformations."""
 
+    scaled_width = int(round(scale * constants.default_width))
+
     transformations = []
     if scale != 1.0:
-        transformations.append(Scale(scale))
+        transformations.append(Resize(scaled_width))
 
     if square:
         transformations.append(Square())

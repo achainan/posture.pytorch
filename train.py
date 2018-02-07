@@ -1,4 +1,6 @@
 """This module trains the pose estimation model."""
+import faulthandler
+faulthandler.enable()
 
 import torch
 import torch.nn as nn
@@ -18,6 +20,9 @@ from config import args
 
 cuda = torch.cuda.is_available()
 logger = SummaryWriter()
+
+if cuda:
+    print "Using CUDA..."
 
 input_height = args.input_height
 # Calculate scale
@@ -42,7 +47,7 @@ def main():
     shuffle = True
 
     normalization = Normalize(images_mean, images_std, labels_mean, labels_std)
-    dataset = load_dataset(normalization, root_dir=args.root_dir, csv_dir=args.csv_dir, scale=scale, random=False)
+    dataset = load_dataset(normalization, root_dir=args.root_dir, csv_dir=args.csv_dir, scale=scale, random=True)
     train_dataset = dataset["train"]
     val_dataset = dataset["valid"]
 
@@ -54,11 +59,13 @@ def main():
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=args.train_batch_size,
                                                shuffle=shuffle,
+                                               num_workers=2,
                                                pin_memory=cuda)
 
     val_loader = torch.utils.data.DataLoader(dataset=val_dataset,
                                              batch_size=args.val_batch_size,
                                              shuffle=shuffle,
+                                             num_workers=2,
                                              pin_memory=cuda)
 
     input_channels = 3
@@ -72,14 +79,14 @@ def main():
     if cuda:
         criterion.cuda()
         cnn.cuda()
-        random_input = random_input.cuda(async=True)
+        random_input = random_input.cuda()
 
     random_input = Variable(random_input, requires_grad=False)
 
     # cnn.summary(random_input)
 
     h = cnn(random_input)
-    logger.add_graph(cnn, h)
+    # logger.add_graph(cnn, h)
 
     # Optimizer and Loss
     optimizer = torch.optim.Adam(cnn.parameters(), lr=constants.learning_rate)
@@ -123,8 +130,8 @@ def validate(loader, model, criterion, epoch):
         images = Variable(val_images)
         labels = Variable(val_labels)
         if cuda:
-            images = images.cuda(async=True)
-            labels = labels.cuda(async=True)
+            images = images.cuda()
+            labels = labels.cuda()
 
         # compute output
         outputs = model(images)
@@ -150,7 +157,7 @@ def validate(loader, model, criterion, epoch):
         print "REAL: ", label.astype(int).tolist()
                 
         output = output.reshape(-1, 2)
-        images = F.denormalize_image_tensor(torch.from_numpy(images_mean), torch.from_numpy(images_std), images)
+        images = F.denormalize_image_tensor(torch.from_numpy(images_mean), torch.from_numpy(images_std), images, cuda)
         image = images.data[0].cpu().numpy()
         image = np.rollaxis(image, 0, 3)
         
@@ -169,8 +176,8 @@ def train(loader, model, optimizer, criterion, epoch):
         images = Variable(train_images)
         labels = Variable(train_labels)
         if cuda:
-            images = images.cuda(async=True)
-            labels = labels.cuda(async=True)
+            images = images.cuda()
+            labels = labels.cuda()
 
         # Forward + Backward + Optimize
         optimizer.zero_grad()
@@ -191,7 +198,7 @@ def train(loader, model, optimizer, criterion, epoch):
                   % (epoch + 1, args.num_epochs, losses.val, losses.avg))
 
     if args.display and epoch % args.display_freq == 0:             
-        images = F.denormalize_image_tensor(torch.from_numpy(images_mean), torch.from_numpy(images_std), images)
+        images = F.denormalize_image_tensor(torch.from_numpy(images_mean), torch.from_numpy(images_std), images, cuda)
         image = images.data[0].cpu().numpy()
         image = np.rollaxis(image, 0, 3)
 

@@ -44,6 +44,10 @@ def normalization_values(grayscale=False, flatten_images=True, flatten_labels=Tr
     return images_mean, images_std, labels_mean, labels_std
 
 if __name__ == '__main__':
-    scale = 64.0/670.0
-    print "Generating normalization (scale={})...".format(scale)
+    from config import args
+    import constants
+    
+    dim = args.input_height
+    scale = dim/constants.default_width    
+    print "Generating normalization (dim={}, scale={})...".format(dim, scale)
     normalization_values(scale=scale, root_dir='B_old/', csv_file='B_old/train_data.csv', cache=False)

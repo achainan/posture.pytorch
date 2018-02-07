@@ -1,7 +1,7 @@
 import argparse
 
 parser = argparse.ArgumentParser(description='Train the pose estimation model.')
-parser.add_argument('--num_epochs', type=int, default=8000)
+parser.add_argument('--num_epochs', type=int, default=5000)
 parser.add_argument('--csv_dir', type=str, default='B/')
 parser.add_argument('--root_dir', type=str, default='B/')
 parser.add_argument('--input_height', type=int, default=128)

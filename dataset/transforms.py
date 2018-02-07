@@ -1,16 +1,14 @@
 import functional as F
 from torchvision import transforms
 import numpy as np
-import scipy.misc
 import torch
-# import scipy.ndimage as ndi
+from PIL import Image
+import random
 
 class Square(object):
-    """Pad the image to make a square in a sample."""
-
     def __call__(self, sample):
-        image = np.array(sample['image'], copy=True, dtype=np.float32)
-        landmarks = np.array(sample['landmarks'], copy=True, dtype=np.float32)
+        image = np.array(sample['image'], copy=False, dtype=np.float32)
+        landmarks = np.array(sample['landmarks'], copy=False, dtype=np.float32)
 
         image, x, y = F.square(image)
 
@@ -21,21 +19,14 @@ class Square(object):
 
         return {'image': image, 'landmarks': landmarks}
 
-
-class Scale(object):
-    """Scale the image in a sample."""
-
-    def __init__(self, size):
-        self.size = size
+class Resize(object):
+    def __init__(self, size, interpolation=Image.BILINEAR):
+        self.transform = transforms.Resize(size, interpolation)
         
     def __call__(self, sample):
-        image = np.array(sample['image'], copy=True, dtype=np.float32)
-        landmarks = np.array(sample['landmarks'], copy=True, dtype=np.float32)
-
-        image = scipy.misc.imresize(image, self.size)
-                
-        return {'image': image, 'landmarks': landmarks}
-
+        image = sample['image']
+        sample['image'] = self.transform(image)
+        return sample
 
 class RandomShift(object):
     """Random shift the image in a sample."""
@@ -44,13 +35,15 @@ class RandomShift(object):
         self.offset = offset
 
     def __call__(self, sample):
-        image = np.array(sample['image'], copy=True, dtype=np.float32)
-        landmarks = np.array(sample['landmarks'], copy=True, dtype=np.float32)
+        image = sample['image']
+        landmarks = np.array(sample['landmarks'], copy=False, dtype=np.float32)
 
         image, tx, ty = F.shift(image, self.offset)
-        
+
+        landmarks = landmarks.reshape(-1, 2) 
         landmarks[:, 0] -= tx
         landmarks[:, 1] -= ty
+        landmarks = landmarks.reshape(-1, 1) 
 
         return {'image': image, 'landmarks': landmarks}
 
@@ -59,8 +52,8 @@ class BlackAndWhite(object):
     """Convert image to grayscale."""
 
     def __call__(self, sample):
-        image = np.array(sample['image'], copy=True, dtype=np.float32)
-        landmarks = np.array(sample['landmarks'], copy=True, dtype=np.float32)
+        image = np.array(sample['image'], copy=False, dtype=np.float32)
+        landmarks = np.array(sample['landmarks'], copy=False, dtype=np.float32)
 
         image = np.dot(image[..., :3], [0.299, 0.587, 0.114])
         image = np.expand_dims(image, axis=3)
@@ -76,8 +69,8 @@ class ToTensor(object):
         self.transform = transforms.ToTensor()
 
     def __call__(self, sample):
-        image = np.array(sample['image'], copy=False, dtype=np.float32)
-        landmarks = np.array(sample['landmarks'], copy=True, dtype=np.float32)
+        image = np.array(sample['image'], dtype=np.float32)
+        landmarks = np.array(sample['landmarks'], copy=False, dtype=np.float32)
 
         # plt.imshow(image/255)
         # plt.show()
@@ -108,13 +101,13 @@ class RandomSwapColors(object):
     """Random swap colors of the image in a sample.
     """
     def __call__(self, sample):
-        image = np.array(sample['image'], copy=True, dtype=np.float32)
-        landmarks = np.array(sample['landmarks'], copy=True, dtype=np.float32)
+        image = np.array(sample['image'], copy=False, dtype=np.float32)
 
-        rand = np.random.uniform(0, 1)
+        rand = random.random()
         image = F.swap_colors(image, rand)
 
-        return {'image': image, 'landmarks': landmarks}
+        sample['image'] = image
+        return sample
 
 class RandomRotation(object):
     """Rotate the image by a random angle."""
@@ -124,12 +117,12 @@ class RandomRotation(object):
 
     @staticmethod
     def get_params(degrees):
-        angle = np.random.uniform(degrees[0], degrees[1])
+        angle = random.uniform(degrees[0], degrees[1])
         return angle
 
     def __call__(self, sample):
-        image = np.array(sample['image'], copy=True, dtype=np.float32)
-        landmarks = np.array(sample['landmarks'], copy=True, dtype=np.float32)
+        image = np.array(sample['image'], copy=False, dtype=np.float32)
+        landmarks = np.array(sample['landmarks'], copy=False, dtype=np.float32)
 
         angle = self.get_params(self.degrees)
 
